@@ -1,0 +1,183 @@
+package com.malinimahal.enquiry;
+
+import com.malinimahal.muhurtham.MuhurthamDateDao;
+import com.malinimahal.notification.OwnerNotifier;
+import com.malinimahal.web.JsonSupport;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+
+@WebServlet(urlPatterns = {"/api/enquiries", "/api/enquiries/*"})
+public class EnquiryServlet extends HttpServlet {
+
+    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
+
+    private static final Map<String, List<String>> FUNCTION_TYPES = Map.of(
+        "FULL_DAY",  List.of("MARRIAGE"),
+        "HALF_DAY",  List.of("RECEPTION", "ENGAGEMENT", "BIRTHDAY_FUNCTION", "OTHER"),
+        "HOURLY",    List.of("MEETING", "CONFERENCE", "TRAINING_SESSION", "SEMINAR",
+                             "WORKSHOP", "SMALL_GATHERING", "OTHER_HOURLY")
+    );
+
+    private final EnquiryDao        dao             = new EnquiryDao();
+    private final MuhurthamDateDao  muhurthamDao    = new MuhurthamDateDao();
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        Enquiry input;
+        try {
+            input = JsonSupport.MAPPER.readValue(req.getInputStream(), Enquiry.class);
+        } catch (Exception e) {
+            JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
+            return;
+        }
+
+        String validationError = validate(input);
+        if (validationError != null) {
+            JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, validationError);
+            return;
+        }
+
+        OffsetDateTime startDt = computeStart(input);
+        OffsetDateTime endDt   = computeEnd(input);
+
+        try {
+            if (dao.hasConflict(input.getRentalType(), startDt, endDt, null)) {
+                JsonSupport.error(resp, 409,
+                        "This time slot is already booked. Please choose a different date or time.");
+                return;
+            }
+        } catch (Exception conflictEx) {
+            getServletContext().log("Conflict check failed — proceeding without check", conflictEx);
+        }
+
+        boolean muhurtham = false;
+        try {
+            muhurtham = muhurthamDao.isOnMuhurtham(input.getEventDate());
+        } catch (Exception ignore) {}
+
+        if (muhurtham && "HOURLY".equals(input.getRentalType())) {
+            JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "Hourly rentals are not available on muhurtham dates");
+            return;
+        }
+
+        Enquiry toSave = new Enquiry();
+        toSave.setCustomerName(input.getCustomerName().trim());
+        toSave.setMobile(input.getMobile().trim());
+        toSave.setEventDate(input.getEventDate());
+        toSave.setRentalType(input.getRentalType());
+        toSave.setFunctionType(input.getFunctionType().trim());
+        toSave.setMessage(input.getMessage() == null ? null : input.getMessage().trim());
+        toSave.setStartDatetime(startDt);
+        toSave.setEndDatetime(endDt);
+        toSave.setMuhurtham(muhurtham);
+
+        try {
+            Enquiry saved = dao.create(toSave);
+            OwnerNotifier.notifyAsync(saved);
+            JsonSupport.write(resp, HttpServletResponse.SC_CREATED, saved);
+        } catch (Exception e) {
+            getServletContext().log("Failed to create enquiry", e);
+            JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Could not save the enquiry. Please try again.");
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String path = req.getPathInfo();
+        if (path == null || path.length() <= 1) {
+            JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing enquiry reference");
+            return;
+        }
+        try {
+            Enquiry found = dao.findByReference(path.substring(1));
+            if (found == null) {
+                JsonSupport.error(resp, HttpServletResponse.SC_NOT_FOUND, "No enquiry found for that reference");
+                return;
+            }
+            JsonSupport.write(resp, HttpServletResponse.SC_OK, found);
+        } catch (Exception e) {
+            getServletContext().log("Failed to look up enquiry", e);
+            JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Could not look up the enquiry. Please try again.");
+        }
+    }
+
+    /**
+     * Compute start_datetime in IST per T&C Rule 1:
+     *   FULL_DAY → day BEFORE event date at 15:00 (3:00 PM)
+     *   HALF_DAY / HOURLY → event date at customer-supplied startTime
+     */
+    private static OffsetDateTime computeStart(Enquiry e) {
+        if ("FULL_DAY".equals(e.getRentalType())) {
+            return e.getEventDate().minusDays(1).atTime(15, 0)
+                    .atZone(IST).toOffsetDateTime();
+        }
+        return e.getEventDate().atTime(LocalTime.parse(e.getStartTime()))
+                .atZone(IST).toOffsetDateTime();
+    }
+
+    /**
+     * Compute end_datetime in IST per T&C Rule 1:
+     *   FULL_DAY → event date at 14:00 (2:00 PM)
+     *   HALF_DAY / HOURLY → event date at customer-supplied endTime
+     */
+    private static OffsetDateTime computeEnd(Enquiry e) {
+        if ("FULL_DAY".equals(e.getRentalType())) {
+            return e.getEventDate().atTime(14, 0)
+                    .atZone(IST).toOffsetDateTime();
+        }
+        return e.getEventDate().atTime(LocalTime.parse(e.getEndTime()))
+                .atZone(IST).toOffsetDateTime();
+    }
+
+    private static String validate(Enquiry e) {
+        if (isBlank(e.getCustomerName())) return "Name is required";
+        if (isBlank(e.getMobile()))       return "Mobile number is required";
+        if (!e.getMobile().trim().matches("[6-9]\\d{9}"))
+            return "Mobile must be a 10-digit number starting with 6, 7, 8, or 9";
+        if (e.getEventDate() == null)     return "Event date is required";
+        if (isBlank(e.getRentalType()))   return "Rental type is required";
+
+        List<String> allowed = FUNCTION_TYPES.get(e.getRentalType());
+        if (allowed == null) return "Invalid rental type";
+
+        if (isBlank(e.getFunctionType())) return "Function type is required";
+        if (!allowed.contains(e.getFunctionType())) {
+            return "Function type '" + e.getFunctionType() + "' is not valid for rental type " + e.getRentalType();
+        }
+
+        // FULL_DAY (Marriage) datetimes are auto-computed; no time input needed
+        if (!"FULL_DAY".equals(e.getRentalType())) {
+            if (isBlank(e.getStartTime())) return "Start time is required";
+            if (isBlank(e.getEndTime()))   return "End time is required";
+            try {
+                LocalTime start = LocalTime.parse(e.getStartTime());
+                LocalTime end   = LocalTime.parse(e.getEndTime());
+                if (!end.isAfter(start)) return "End time must be after start time";
+                if ("HOURLY".equals(e.getRentalType())) {
+                    long hours = Duration.between(start, end).toHours();
+                    if (hours < 2) return "Hourly rental requires at least 2 hours";
+                    if (hours > 4) return "Hourly rental allows a maximum of 4 hours";
+                }
+            } catch (Exception ex) {
+                return "Invalid time format (expected HH:MM)";
+            }
+        }
+        return null;
+    }
+
+    private static boolean isBlank(String s) { return s == null || s.isBlank(); }
+}

@@ -1,0 +1,22 @@
+# Maven build output
+backend/target/
+
+# Ember / Node build output
+frontend/node_modules/
+frontend/dist/
+frontend/tmp/
+frontend/.vite/
+frontend/.ember-cache/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Never commit secrets
+*.env
+.env.*
+application-local.properties

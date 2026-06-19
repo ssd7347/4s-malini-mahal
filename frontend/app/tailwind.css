@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+@source '../app';
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in  { animation: fade-in  0.2s ease-out both; }
+.animate-slide-up { animation: slide-up 0.3s ease-out both; }
+
+/* ── Receipt print styles ──────────────────────────────────────────────── */
+@media print {
+  /* Hide site chrome */
+  header, footer, .receipt-toolbar { display: none !important; }
+  /* Remove main padding so receipt fills the page */
+  main { padding: 0 !important; }
+  body { background: white !important; }
+  /* Remove card shadow / rounded corners */
+  .receipt-body { box-shadow: none !important; border-radius: 0 !important; border: none !important; max-width: 100% !important; }
+  /* Keep logo visible in print */
+  .receipt-logo { display: block !important; }
+  /* Prevent T&C from splitting across pages mid-paragraph */
+  .whitespace-pre-wrap { orphans: 3; widows: 3; }
+}
+@page { margin: 1.5cm; size: A4; }

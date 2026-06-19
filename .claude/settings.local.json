@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements --disable-interactivity)",
+      "mcp__Claude_Preview__preview_start",
+      "PowerShell($env:PGPASSWORD = 'A3Hf7@g+'; psql -U postgres -d malinimahal -f \"C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal\\\\backend\\\\db\\\\schema.sql\" 2>&1)",
+      "WebFetch(domain:maps.app.goo.gl)",
+      "PowerShell(Copy-Item \"C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal\\\\backend\\\\target\\\\malinimahal.war\" \"C:\\\\tools\\\\apache-tomcat-10.1.55\\\\webapps\\\\malinimahal.war\" -Force; Write-Host \"WAR deployed at $\\(Get-Date\\)\")",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(npm run *)",
+      "Read(//c/tools//**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/malinimahal/api/health)",
+      "Bash(curl -s http://localhost:8080/malinimahal/api/payments/invoice/NONEXISTENT)",
+      "Bash(python3 -c \"import sys,json; print\\(json.load\\(sys.stdin\\)\\)\")",
+      "Bash(curl -s http://localhost:4200/payment/MM-TEST123)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:8080/malinimahal/api/terms/current\")",
+      "Bash(curl -s \"http://localhost:8080/malinimahal/api/muhurtham\")",
+      "Bash(curl -s \"http://localhost:8080/malinimahal/api/admin/refunds\" -b \"session=test\")",
+      "Bash(curl -s -X POST http://localhost:8080/malinimahal/api/admin/muhurtham -H 'Content-Type: application/json' -b session=test -d '{\"date\":\"2026-06-19\",\"note\":\"Test\"}')",
+      "Bash(curl -s http://localhost:8080/malinimahal/api/admin/terms/versions -H 'Content-Type: application/json')",
+      "Bash(curl -s \"http://localhost:8080/malinimahal/api/terms/current\")",
+      "Bash(python -m json.tool)",
+      "PowerShell($env:PGPASSWORD = \"A3Hf7@g+\"; $result = & \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -U postgres -d malinimahal -f \"C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal\\\\tc_insert.sql\"; Write-Output \"Exit: $LASTEXITCODE\"; Write-Output $result)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Version:', d['version'], '| Active:', d['isActive'], '| English preview:', d['englishText'][:80]\\)\")",
+      "Bash(netstat -ano)",
+      "Bash(/c/tools/apache-maven-3.9.16/bin/mvn -q package -DskipTests)",
+      "Bash(ls -la \"C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal\\\\\" 2>&1 | head -50)",
+      "Bash(/c/tools/apache-maven-3.9.16/bin/mvn -f backend/pom.xml clean package -q)",
+      "Bash(/c/tools/apache-maven-3.9.16/bin/mvn package *)"
+    ]
+  }
+}
