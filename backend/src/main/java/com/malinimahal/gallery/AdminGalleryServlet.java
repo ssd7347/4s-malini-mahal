@@ -19,15 +19,16 @@ import java.util.UUID;
 
 /**
  * Admin-only gallery management. Protected by AuthFilter on /api/admin/*.
- *   POST /api/admin/gallery          — multipart: upload image; JSON: add YouTube video
- *   DELETE /api/admin/gallery/{id}   — remove item (deletes file on disk for images)
+ *   POST /api/admin/gallery          — multipart: upload image or video; JSON: add YouTube video
+ *   DELETE /api/admin/gallery/{id}   — remove item (deletes file on disk for images and local videos)
  */
 @WebServlet("/api/admin/gallery/*")
-@MultipartConfig(maxFileSize = 15L * 1024 * 1024, maxRequestSize = 20L * 1024 * 1024)
+@MultipartConfig(maxFileSize = 200L * 1024 * 1024, maxRequestSize = 210L * 1024 * 1024)
 public class AdminGalleryServlet extends HttpServlet {
 
     private final GalleryDao dao = new GalleryDao();
-    private static final Set<String> ALLOWED = Set.of("jpg", "jpeg", "png", "webp");
+    private static final Set<String> IMAGE_ALLOWED = Set.of("jpg", "jpeg", "png", "webp");
+    private static final Set<String> VIDEO_ALLOWED = Set.of("mp4", "webm", "mov");
 
     private Path uploadDir() {
         String dir = System.getenv("UPLOAD_DIR");
@@ -43,7 +44,7 @@ public class AdminGalleryServlet extends HttpServlet {
         String ct = req.getContentType();
         try {
             if (ct != null && ct.startsWith("multipart/")) {
-                handleImageUpload(req, resp);
+                handleFileUpload(req, resp);
             } else {
                 handleYouTubeAdd(req, resp);
             }
@@ -53,7 +54,7 @@ public class AdminGalleryServlet extends HttpServlet {
         }
     }
 
-    private void handleImageUpload(HttpServletRequest req, HttpServletResponse resp)
+    private void handleFileUpload(HttpServletRequest req, HttpServletResponse resp)
             throws Exception {
         Part filePart = req.getPart("file");
         if (filePart == null || filePart.getSize() == 0) {
@@ -66,9 +67,14 @@ public class AdminGalleryServlet extends HttpServlet {
             return;
         }
         String ext = origName.substring(origName.lastIndexOf('.') + 1).toLowerCase();
-        if (!ALLOWED.contains(ext)) {
+        String mediaType;
+        if (IMAGE_ALLOWED.contains(ext)) {
+            mediaType = "IMAGE";
+        } else if (VIDEO_ALLOWED.contains(ext)) {
+            mediaType = "VIDEO";
+        } else {
             JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    "Only JPG, PNG, and WebP images are allowed");
+                    "Allowed images: JPG, PNG, WebP — Allowed videos: MP4, WebM, MOV");
             return;
         }
         String filename = UUID.randomUUID() + "." + ext;
@@ -77,7 +83,7 @@ public class AdminGalleryServlet extends HttpServlet {
         Files.copy(filePart.getInputStream(), dir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
 
         String title = req.getParameter("title");
-        GalleryItem item = dao.add("IMAGE", filename, null, title != null ? title.strip() : null);
+        GalleryItem item = dao.add(mediaType, filename, null, title != null ? title.strip() : null);
         JsonSupport.write(resp, HttpServletResponse.SC_CREATED, item);
     }
 
@@ -117,7 +123,7 @@ public class AdminGalleryServlet extends HttpServlet {
                 return;
             }
             dao.remove(id);
-            if ("IMAGE".equals(item.getMediaType()) && item.getFilename() != null) {
+            if (item.getFilename() != null) {
                 try { Files.deleteIfExists(uploadDir().resolve(item.getFilename())); }
                 catch (IOException ex) { getServletContext().log("File delete failed", ex); }
             }

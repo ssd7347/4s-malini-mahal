@@ -6,10 +6,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Serves uploaded gallery images. GET /api/media/{filename} */
+/** Serves uploaded gallery images and videos. GET /api/media/{filename} */
 @WebServlet("/api/media/*")
 public class MediaServlet extends HttpServlet {
 
@@ -44,12 +46,47 @@ public class MediaServlet extends HttpServlet {
             case "jpg", "jpeg" -> "image/jpeg";
             case "png"         -> "image/png";
             case "webp"        -> "image/webp";
+            case "mp4"         -> "video/mp4";
+            case "webm"        -> "video/webm";
+            case "mov"         -> "video/quicktime";
             default            -> "application/octet-stream";
         };
 
-        resp.setContentType(contentType);
+        long fileSize = Files.size(file);
+        resp.setHeader("Accept-Ranges", "bytes");
         resp.setHeader("Cache-Control", "public, max-age=86400");
-        resp.setContentLengthLong(Files.size(file));
-        Files.copy(file, resp.getOutputStream());
+
+        String rangeHeader = req.getHeader("Range");
+        if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+            String range = rangeHeader.substring("bytes=".length());
+            String[] parts = range.split("-", 2);
+            long start = Long.parseLong(parts[0]);
+            long end   = (parts.length > 1 && !parts[1].isEmpty())
+                          ? Long.parseLong(parts[1]) : fileSize - 1;
+            if (end >= fileSize) end = fileSize - 1;
+            long contentLength = end - start + 1;
+
+            resp.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+            resp.setContentType(contentType);
+            resp.setHeader("Content-Range", "bytes " + start + "-" + end + "/" + fileSize);
+            resp.setContentLengthLong(contentLength);
+
+            try (InputStream is = Files.newInputStream(file)) {
+                is.skip(start);
+                byte[] buf = new byte[65536];
+                long remaining = contentLength;
+                int read;
+                OutputStream out = resp.getOutputStream();
+                while (remaining > 0 &&
+                       (read = is.read(buf, 0, (int) Math.min(buf.length, remaining))) != -1) {
+                    out.write(buf, 0, read);
+                    remaining -= read;
+                }
+            }
+        } else {
+            resp.setContentType(contentType);
+            resp.setContentLengthLong(fileSize);
+            Files.copy(file, resp.getOutputStream());
+        }
     }
 }

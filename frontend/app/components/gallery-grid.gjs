@@ -60,14 +60,21 @@ export default class GalleryGrid extends Component {
 
   get gridItems() {
     const src = this.filter === 'ALL' ? this.items : this.items.filter(i => i.mediaType === this.filter);
-    return src.map(item => ({
-      ...item,
-      isImage: item.mediaType === 'IMAGE',
-      thumbSrc: item.mediaType === 'IMAGE'
-        ? apiUrl('/api/media/' + item.filename)
-        : (ytId(item.youtubeUrl) ? `https://img.youtube.com/vi/${ytId(item.youtubeUrl)}/hqdefault.jpg` : ''),
-      timeAgo: timeAgo(item.createdAt),
-    }));
+    return src.map(item => {
+      const isLocalVideo = item.mediaType === 'VIDEO' && !!item.filename;
+      return {
+        ...item,
+        isImage: item.mediaType === 'IMAGE',
+        isLocalVideo,
+        thumbSrc: item.mediaType === 'IMAGE'
+          ? apiUrl('/api/media/' + item.filename)
+          : isLocalVideo
+            ? null
+            : (ytId(item.youtubeUrl) ? `https://img.youtube.com/vi/${ytId(item.youtubeUrl)}/hqdefault.jpg` : ''),
+        videoSrc: isLocalVideo ? apiUrl('/api/media/' + item.filename) : null,
+        timeAgo: timeAgo(item.createdAt),
+      };
+    });
   }
 
   get lightbox() {
@@ -75,13 +82,13 @@ export default class GalleryGrid extends Component {
     const item = this.gridItems[this.lightboxIndex];
     if (!item) return null;
     const videoId = ytId(item.youtubeUrl);
-    return {
-      type: item.isImage ? 'IMAGE' : 'VIDEO',
-      src: item.isImage
-        ? item.thumbSrc
-        : (videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0` : ''),
-      title: item.title,
-    };
+    const type = item.isImage ? 'IMAGE' : item.isLocalVideo ? 'LOCAL_VIDEO' : 'YOUTUBE';
+    const src = item.isImage
+      ? item.thumbSrc
+      : item.isLocalVideo
+        ? item.videoSrc
+        : (videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0` : '');
+    return { type, src, title: item.title };
   }
 
   get lightboxCounter() {
@@ -89,13 +96,14 @@ export default class GalleryGrid extends Component {
     return (this.lightboxIndex + 1) + ' / ' + this.gridItems.length;
   }
 
-  get hasMultiple()   { return this.gridItems.length > 1; }
-  get photoCount()    { return this.items.filter(i => i.mediaType === 'IMAGE').length; }
-  get videoCount()    { return this.items.filter(i => i.mediaType === 'VIDEO').length; }
-  get filterIsAll()   { return this.filter === 'ALL'; }
-  get filterIsPhoto() { return this.filter === 'IMAGE'; }
-  get filterIsVideo() { return this.filter === 'VIDEO'; }
-  get lightboxIsImage() { return this.lightbox?.type === 'IMAGE'; }
+  get hasMultiple()        { return this.gridItems.length > 1; }
+  get photoCount()         { return this.items.filter(i => i.mediaType === 'IMAGE').length; }
+  get videoCount()         { return this.items.filter(i => i.mediaType === 'VIDEO').length; }
+  get filterIsAll()        { return this.filter === 'ALL'; }
+  get filterIsPhoto()      { return this.filter === 'IMAGE'; }
+  get filterIsVideo()      { return this.filter === 'VIDEO'; }
+  get lightboxIsImage()    { return this.lightbox?.type === 'IMAGE'; }
+  get lightboxIsLocalVideo() { return this.lightbox?.type === 'LOCAL_VIDEO'; }
 
   @action setFilter(f) {
     this.filter = f;
@@ -163,14 +171,24 @@ export default class GalleryGrid extends Component {
             {{on "click" (fn this.open item)}}
             aria-label={{if item.title item.title "View"}}
           >
-            <img
-              src={{item.thumbSrc}}
-              alt={{if item.title item.title ""}}
-              loading="lazy"
-              class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
+            {{#if item.isLocalVideo}}
+              <video
+                src={{item.videoSrc}}
+                preload="metadata"
+                muted
+                playsinline
+                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              ></video>
+            {{else}}
+              <img
+                src={{item.thumbSrc}}
+                alt={{if item.title item.title ""}}
+                loading="lazy"
+                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            {{/if}}
 
-            {{! Video play overlay }}
+            {{! Overlay }}
             {{#if item.isImage}}
               {{! zoom icon on hover }}
               <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
@@ -257,6 +275,14 @@ export default class GalleryGrid extends Component {
             style="max-height:calc(100vh - 2rem);max-width:calc(100vw - 8rem);object-fit:contain;display:block"
             {{on "click" this.stopProp}}
           />
+        {{else if this.lightboxIsLocalVideo}}
+          <video
+            src={{this.lightbox.src}}
+            controls
+            autoplay
+            style="max-height:calc(100vh - 2rem);max-width:calc(100vw - 8rem);outline:none;display:block"
+            {{on "click" this.stopProp}}
+          ></video>
         {{else}}
           <div
             style="width:min(90vw,56rem);aspect-ratio:16/9"

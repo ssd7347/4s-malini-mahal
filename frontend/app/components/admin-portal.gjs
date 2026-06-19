@@ -95,13 +95,20 @@ export default class AdminPortal extends Component {
   }
 
   get galleryRows() {
-    return this.galleryItems.map((item) => ({
-      ...item,
-      isImage: item.mediaType === 'IMAGE',
-      thumbSrc: item.mediaType === 'IMAGE'
-        ? apiUrl('/api/media/' + item.filename)
-        : (ytId(item.youtubeUrl) ? `https://img.youtube.com/vi/${ytId(item.youtubeUrl)}/hqdefault.jpg` : ''),
-    }));
+    return this.galleryItems.map((item) => {
+      const isLocalVideo = item.mediaType === 'VIDEO' && !!item.filename;
+      return {
+        ...item,
+        isImage: item.mediaType === 'IMAGE',
+        isLocalVideo,
+        thumbSrc: item.mediaType === 'IMAGE'
+          ? apiUrl('/api/media/' + item.filename)
+          : isLocalVideo
+            ? null
+            : (ytId(item.youtubeUrl) ? `https://img.youtube.com/vi/${ytId(item.youtubeUrl)}/hqdefault.jpg` : ''),
+        videoSrc: isLocalVideo ? apiUrl('/api/media/' + item.filename) : null,
+      };
+    });
   }
 
   get stats() {
@@ -265,6 +272,27 @@ export default class AdminPortal extends Component {
       const gRes = await this.api('/api/gallery');
       if (gRes.ok) this.galleryItems = await gRes.json();
       this.flash('Photo added to gallery');
+    } else {
+      const data = await res.json().catch(() => ({}));
+      this.flash(data.error || 'Upload failed');
+    }
+  }
+
+  @action
+  async addVideoFile(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const fd = new FormData(form);
+    const res = await fetch(apiUrl('/api/admin/gallery'), {
+      method: 'POST',
+      credentials: 'include',
+      body: fd,
+    });
+    if (res.ok) {
+      form.reset();
+      const gRes = await this.api('/api/gallery');
+      if (gRes.ok) this.galleryItems = await gRes.json();
+      this.flash('Video uploaded to gallery');
     } else {
       const data = await res.json().catch(() => ({}));
       this.flash(data.error || 'Upload failed');
@@ -704,7 +732,7 @@ export default class AdminPortal extends Component {
             <span class="text-sm text-stone-400">{{this.galleryItems.length}} items</span>
           </div>
 
-          <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             {{! Photo upload }}
             <form class="rounded-xl border border-stone-200 bg-white p-4 space-y-2" {{on "submit" this.addPhoto}}>
               <h3 class="text-sm font-semibold text-stone-700">Upload photo</h3>
@@ -722,6 +750,24 @@ export default class AdminPortal extends Component {
               </button>
             </form>
 
+            {{! Local video upload }}
+            <form class="rounded-xl border border-stone-200 bg-white p-4 space-y-2" {{on "submit" this.addVideoFile}}>
+              <h3 class="text-sm font-semibold text-stone-700">Upload video</h3>
+              <input
+                name="file"
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                required
+                class="block w-full text-sm text-stone-500 file:mr-3 file:rounded-lg file:border-0 file:bg-rose-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-rose-700 hover:file:bg-rose-100 transition-colors cursor-pointer"
+              />
+              <p class="text-xs text-stone-400">MP4, WebM, MOV · max 200 MB</p>
+              <input name="title" type="text" placeholder="Caption (optional)" class="w-full {{INPUT_CLS}}" />
+              <button type="submit"
+                class="w-full rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-rose-800 active:scale-[0.98]">
+                Upload video
+              </button>
+            </form>
+
             {{! YouTube video }}
             <form class="rounded-xl border border-stone-200 bg-white p-4 space-y-2" {{on "submit" this.addVideo}}>
               <h3 class="text-sm font-semibold text-stone-700">Add YouTube video</h3>
@@ -729,7 +775,7 @@ export default class AdminPortal extends Component {
               <input name="title" type="text" placeholder="Caption (optional)" class="w-full {{INPUT_CLS}}" />
               <button type="submit"
                 class="w-full rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-rose-800 active:scale-[0.98]">
-                Add video
+                Add YouTube video
               </button>
             </form>
           </div>
@@ -738,8 +784,13 @@ export default class AdminPortal extends Component {
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {{#each this.galleryRows as |item|}}
               <div class="group relative rounded-xl overflow-hidden border border-stone-100 bg-stone-100 aspect-video shadow-sm">
-                <img src={{item.thumbSrc}} alt={{if item.title item.title ""}} loading="lazy"
-                  class="h-full w-full object-cover" />
+                {{#if item.isLocalVideo}}
+                  <video src={{item.videoSrc}} preload="metadata" muted playsinline
+                    class="h-full w-full object-cover"></video>
+                {{else}}
+                  <img src={{item.thumbSrc}} alt={{if item.title item.title ""}} loading="lazy"
+                    class="h-full w-full object-cover" />
+                {{/if}}
 
                 {{#if item.isImage}}
                   {{! no extra overlay needed }}
@@ -775,7 +826,7 @@ export default class AdminPortal extends Component {
               </div>
             {{else}}
               <div class="col-span-full py-8 text-center text-sm text-stone-400">
-                No gallery items yet. Upload a photo or add a YouTube video above.
+                No gallery items yet. Upload a photo, upload a video, or add a YouTube link above.
               </div>
             {{/each}}
           </div>
