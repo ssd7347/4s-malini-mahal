@@ -10,12 +10,12 @@ const MOBILE_LINK = 'block w-full rounded-lg px-4 py-2.5 text-sm font-medium tex
 
 const T = {
   en: {
-    home: 'Home', gallery: 'Gallery', bookNow: 'Book Now',
+    home: 'Home', gallery: 'Gallery', amenities: 'Amenities', bookNow: 'Book Now',
     trackBooking: 'Track Booking', contact: 'Contact',
     admin: 'Admin', logIn: 'Log in', logOut: 'Log out',
   },
   ta: {
-    home: 'முகப்பு', gallery: 'கேலரி', bookNow: 'பதிவு செய்',
+    home: 'முகப்பு', gallery: 'கேலரி', amenities: 'வசதிகள்', bookNow: 'பதிவு செய்',
     trackBooking: 'கண்காணி', contact: 'தொடர்பு',
     admin: 'நிர்வாகம்', logIn: 'உள்நுழைய', logOut: 'வெளியேறு',
   },
@@ -61,9 +61,10 @@ export default class NavBar extends Component {
 
         {{! Desktop navigation }}
         <div class="hidden md:flex items-center gap-0.5 text-sm font-medium">
-          <LinkTo @route="index"   class={{NAV_LINK}}>{{this.t.home}}</LinkTo>
-          <LinkTo @route="gallery" class={{NAV_LINK}}>{{this.t.gallery}}</LinkTo>
-          <LinkTo @route="booking" class={{NAV_LINK}}>{{this.t.bookNow}}</LinkTo>
+          <LinkTo @route="index"     class={{NAV_LINK}}>{{this.t.home}}</LinkTo>
+          <LinkTo @route="gallery"   class={{NAV_LINK}}>{{this.t.gallery}}</LinkTo>
+          <LinkTo @route="amenities" class={{NAV_LINK}}>{{this.t.amenities}}</LinkTo>
+          <LinkTo @route="booking"   class={{NAV_LINK}}>{{this.t.bookNow}}</LinkTo>
           <LinkTo @route="track"   class={{NAV_LINK}}>{{this.t.trackBooking}}</LinkTo>
           <LinkTo @route="contact" class={{NAV_LINK}}>{{this.t.contact}}</LinkTo>
           {{#if this.auth.isAdmin}}
@@ -129,9 +130,10 @@ export default class NavBar extends Component {
       {{! Mobile dropdown }}
       {{#if this.mobileMenuOpen}}
         <div class="md:hidden border-t border-stone-100 bg-white px-3 py-3 space-y-1 shadow-lg">
-          <LinkTo @route="index"   class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.home}}</LinkTo>
-          <LinkTo @route="gallery" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.gallery}}</LinkTo>
-          <LinkTo @route="booking" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.bookNow}}</LinkTo>
+          <LinkTo @route="index"     class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.home}}</LinkTo>
+          <LinkTo @route="gallery"   class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.gallery}}</LinkTo>
+          <LinkTo @route="amenities" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.amenities}}</LinkTo>
+          <LinkTo @route="booking"   class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.bookNow}}</LinkTo>
           <LinkTo @route="track"   class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.trackBooking}}</LinkTo>
           <LinkTo @route="contact" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.contact}}</LinkTo>
           {{#if this.auth.isAdmin}}

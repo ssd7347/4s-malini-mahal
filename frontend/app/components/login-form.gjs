@@ -68,7 +68,7 @@ export default class LoginForm extends Component {
   get returnToRoute() {
     if (this.auth.returnTo) return this.auth.returnTo;
     const next = new URLSearchParams(window.location.search).get('next');
-    const map = { '/gallery': 'gallery', '/enquiry': 'enquiry', '/admin': 'admin' };
+    const map = { '/gallery': 'gallery', '/enquiry': 'enquiry', '/admin': 'admin', '/booking': 'booking' };
     return map[next] || 'index';
   }
 
@@ -127,10 +127,11 @@ export default class LoginForm extends Component {
         this.error = data.error || this.t.errVerify;
       } else {
         const data = await res.json();
+        const route = this.returnToRoute; // capture before clearing returnTo
         this.auth.user     = data;
         this.auth._checked = true;
         this.auth.returnTo = null;
-        this.router.transitionTo(this.returnToRoute);
+        this.router.transitionTo(route);
       }
     } catch (_) {
       this.error = this.t.errServer;

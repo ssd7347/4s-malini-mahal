@@ -8,6 +8,7 @@ import { apiUrl } from 'frontend/utils/api';
 import ClockTimePicker from 'frontend/components/clock-time-picker';
 import DatePickerCalendar from 'frontend/components/date-picker-calendar';
 
+
 const INPUT_CLS = 'mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-stone-900 placeholder:text-stone-400 transition-[border-color,box-shadow] duration-150 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 focus:outline-none';
 
 const FUNCTION_TYPES = {
@@ -73,6 +74,9 @@ const T = {
     msgPlaceholder:     'Any specific requirements…',
     submit:             'Submit Booking',
     submitting:         'Submitting…',
+    loginPrompt:        'Log in to confirm your booking',
+    loginPromptHint:    'Your details above will be ready — just log in and submit.',
+    loginBtn:           'Log In to Continue',
     timesRequired:      'Please select start and end times using the clock.',
     errServer:          'Could not reach the server. Please try again.',
     errGeneric:         'Something went wrong. Please try again.',
@@ -128,6 +132,9 @@ const T = {
     msgPlaceholder:     'ஏதாவது குறிப்பிட்ட தேவைகள்…',
     submit:             'பதிவை சமர்ப்பிக்கவும்',
     submitting:         'சமர்ப்பிக்கிறது…',
+    loginPrompt:        'பதிவை உறுதிப்படுத்த உள்நுழைக',
+    loginPromptHint:    'மேலே உள்ள விவரங்கள் தயாராக இருக்கும் — உள்நுழைந்து சமர்ப்பிக்கவும்.',
+    loginBtn:           'தொடர உள்நுழைக',
     timesRequired:      'கடிகாரத்தில் தொடக்க மற்றும் முடிவு நேரங்களை தேர்வு செய்யுங்கள்.',
     errServer:          'சேவையகத்தை அடைய முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
     errGeneric:         'ஏதோ தவறாகிவிட்டது. மீண்டும் முயற்சிக்கவும்.',
@@ -155,8 +162,12 @@ function fmtDate(iso) {
 export default class EnquiryForm extends Component {
   @service auth;
   @service language;
+  @service router;
+
+  _pendingPayload = null;
 
   @tracked submitting         = false;
+  @tracked showLoginPrompt    = false;
   @tracked error              = null;
   @tracked reference          = null;
   @tracked submission         = null;
@@ -166,6 +177,53 @@ export default class EnquiryForm extends Component {
   @tracked availabilityLoading= false;
   @tracked rentalType         = '';
   @tracked selectedDate       = '';
+
+  constructor(owner, args) {
+    super(owner, args);
+    const saved = sessionStorage.getItem('mm_pending_booking');
+    if (saved && this.auth.isLoggedIn) {
+      sessionStorage.removeItem('mm_pending_booking');
+      const payload = JSON.parse(saved);
+      payload.mobile = this.auth.user?.mobile;
+      Promise.resolve().then(() => this._submitPayload(payload));
+    }
+  }
+
+  async _submitPayload(payload) {
+    this.submitting = true;
+    try {
+      const res = await fetch(apiUrl('/api/enquiries'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        this.error = data.error || this.t.errGeneric;
+      } else {
+        const data = await res.json();
+        const allOptions = Object.values(FUNCTION_TYPES).flat();
+        const ftOpt = allOptions.find(o => o.value === payload.functionType);
+        const lang = this.language.lang;
+        this.submission = {
+          reference:         data.reference,
+          customerName:      payload.customerName,
+          eventDate:         payload.eventDate,
+          functionTypeLabel: ftOpt ? ftOpt[lang] : payload.functionType,
+        };
+        this.reference    = data.reference;
+        this.availability = null;
+        this.isMuhurtham  = false;
+        this.bookedSlots  = [];
+        this.rentalType   = '';
+        this.selectedDate = '';
+      }
+    } catch (_) {
+      this.error = this.t.errServer;
+    } finally {
+      this.submitting = false;
+    }
+  }
 
   get t()                    { return T[this.language.lang]; }
   get availabilityIsGood()   { return this.availability === 'AVAILABLE'; }
@@ -278,72 +336,58 @@ export default class EnquiryForm extends Component {
   }
 
   @action
+  goToLogin() {
+    if (this._pendingPayload) {
+      sessionStorage.setItem('mm_pending_booking', JSON.stringify(this._pendingPayload));
+    }
+    this.auth.returnTo = 'booking';
+    this.router.transitionTo('login');
+  }
+
+  @action
   async submit(event) {
     event.preventDefault();
-    this.error      = null;
-    this.submitting = true;
+    this.error = null;
+
+    // Require login before submitting — capture form data so we can auto-submit after OTP
+    if (!this.auth.isLoggedIn) {
+      const fd = new FormData(event.currentTarget);
+      this._pendingPayload = {
+        customerName: fd.get('customerName'),
+        eventDate:    this.selectedDate,
+        rentalType:   fd.get('rentalType'),
+        functionType: fd.get('functionType'),
+        startTime:    fd.get('startTime') || null,
+        endTime:      fd.get('endTime')   || null,
+        message:      fd.get('message'),
+      };
+      this.showLoginPrompt = true;
+      return;
+    }
 
     if (!this.selectedDate) {
-      this.error      = this.language.lang === 'ta' ? 'நிகழ்வு தேதியை தேர்வு செய்யுங்கள்.' : 'Please select an event date.';
-      this.submitting = false;
+      this.error = this.language.lang === 'ta' ? 'நிகழ்வு தேதியை தேர்வு செய்யுங்கள்.' : 'Please select an event date.';
       return;
     }
 
-    const fd        = new FormData(event.currentTarget);
-    const rentalType= fd.get('rentalType');
-    const startTime = fd.get('startTime') || null;
-    const endTime   = fd.get('endTime')   || null;
-
-    if (rentalType !== 'FULL_DAY' && (!startTime || !endTime)) {
-      this.error      = this.t.timesRequired;
-      this.submitting = false;
-      return;
-    }
-
+    const fd = new FormData(event.currentTarget);
     const payload = {
       customerName: fd.get('customerName'),
       mobile:       this.auth.user?.mobile,
       eventDate:    this.selectedDate,
-      rentalType,
+      rentalType:   fd.get('rentalType'),
       functionType: fd.get('functionType'),
-      startTime,
-      endTime,
+      startTime:    fd.get('startTime') || null,
+      endTime:      fd.get('endTime')   || null,
       message:      fd.get('message'),
     };
 
-    try {
-      const res = await fetch(apiUrl('/api/enquiries'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        this.error = data.error || this.t.errGeneric;
-      } else {
-        const data = await res.json();
-        const allOptions = Object.values(FUNCTION_TYPES).flat();
-        const ftOpt      = allOptions.find(o => o.value === payload.functionType);
-        const lang       = this.language.lang;
-        this.submission = {
-          reference:         data.reference,
-          customerName:      payload.customerName,
-          eventDate:         payload.eventDate,
-          functionTypeLabel: ftOpt ? ftOpt[lang] : payload.functionType,
-        };
-        this.reference    = data.reference;
-        this.availability = null;
-        this.isMuhurtham  = false;
-        this.bookedSlots  = [];
-        this.rentalType   = '';
-        this.selectedDate = '';
-        event.currentTarget.reset();
-      }
-    } catch (_) {
-      this.error = this.t.errServer;
-    } finally {
-      this.submitting = false;
+    if (payload.rentalType !== 'FULL_DAY' && (!payload.startTime || !payload.endTime)) {
+      this.error = this.t.timesRequired;
+      return;
     }
+
+    await this._submitPayload(payload);
   }
 
   <template>
@@ -400,14 +444,16 @@ export default class EnquiryForm extends Component {
           <input name="customerName" type="text" required placeholder={{this.t.namePlaceholder}} class={{INPUT_CLS}} />
         </div>
 
-        {{! Mobile }}
-        <div class="flex items-center gap-2.5 rounded-lg bg-stone-50 border border-stone-200 px-3 py-2.5">
-          <svg class="h-4 w-4 text-stone-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
-          </svg>
-          <span class="text-sm font-semibold text-stone-800">{{this.auth.user.mobile}}</span>
-          <span class="ml-auto text-xs text-stone-400">{{this.t.yourAccount}}</span>
-        </div>
+        {{! Mobile — only shown when logged in }}
+        {{#if this.auth.isLoggedIn}}
+          <div class="flex items-center gap-2.5 rounded-lg bg-stone-50 border border-stone-200 px-3 py-2.5">
+            <svg class="h-4 w-4 text-stone-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
+            </svg>
+            <span class="text-sm font-semibold text-stone-800">{{this.auth.user.mobile}}</span>
+            <span class="ml-auto text-xs text-stone-400">{{this.t.yourAccount}}</span>
+          </div>
+        {{/if}}
 
         {{! Event date }}
         <div>
@@ -563,21 +609,45 @@ export default class EnquiryForm extends Component {
           <textarea name="message" rows="3" placeholder={{this.t.msgPlaceholder}} class={{INPUT_CLS}}></textarea>
         </div>
 
-        <button
-          type="submit"
-          disabled={{this.submitting}}
-          class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-rose-800 hover:shadow-md active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {{#if this.submitting}}
-            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            {{this.t.submitting}}
-          {{else}}
-            {{this.t.submit}}
-          {{/if}}
-        </button>
+        {{#if this.showLoginPrompt}}
+          <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 animate-fade-in">
+            <div class="flex items-start gap-3">
+              <svg class="h-5 w-5 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/>
+              </svg>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-amber-800">{{this.t.loginPrompt}}</p>
+                <p class="mt-0.5 text-xs text-amber-700">{{this.t.loginPromptHint}}</p>
+                <button
+                  type="button"
+                  class="mt-3 inline-flex items-center gap-2 rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-800 transition-colors active:scale-[0.97]"
+                  {{on "click" this.goToLogin}}
+                >
+                  {{this.t.loginBtn}}
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        {{else}}
+          <button
+            type="submit"
+            disabled={{this.submitting}}
+            class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-rose-800 hover:shadow-md active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{#if this.submitting}}
+              <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              {{this.t.submitting}}
+            {{else}}
+              {{this.t.submit}}
+            {{/if}}
+          </button>
+        {{/if}}
       </form>
     {{/if}}
   </template>

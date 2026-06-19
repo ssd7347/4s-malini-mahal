@@ -91,7 +91,7 @@ public class AdminEnquiryServlet extends HttpServlet {
             if (enquiry.getStartDatetime() != null && enquiry.getEndDatetime() != null) {
                 boolean conflict;
                 try {
-                    conflict = dao.hasConflict(enquiry.getStartDatetime(), enquiry.getEndDatetime(), reference);
+                    conflict = dao.hasConflict(enquiry.getRentalType(), enquiry.getStartDatetime(), enquiry.getEndDatetime(), reference);
                 } catch (Exception e) {
                     getServletContext().log("Conflict check failed", e);
                     JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not check availability");
