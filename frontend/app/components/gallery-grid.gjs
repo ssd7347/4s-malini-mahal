@@ -31,23 +31,19 @@ export default class GalleryGrid extends Component {
   @tracked loading = true;
   @tracked items = [];
   @tracked filter = 'ALL';
-  @tracked lightboxIndex = null;
+
+  _lightboxIndex = null;
+  _lightboxEl = null;
+  _keyHandler = null;
 
   constructor() {
     super(...arguments);
     this.load();
-    this._onKey = (e) => {
-      if (!this.lightbox) return;
-      if (e.key === 'Escape')     { this.close(); }
-      if (e.key === 'ArrowLeft')  { this.prev(); }
-      if (e.key === 'ArrowRight') { this.next(); }
-    };
-    document.addEventListener('keydown', this._onKey);
   }
 
   willDestroy() {
     super.willDestroy();
-    document.removeEventListener('keydown', this._onKey);
+    this._closeLightbox();
   }
 
   async load() {
@@ -77,61 +73,149 @@ export default class GalleryGrid extends Component {
     });
   }
 
-  get lightbox() {
-    if (this.lightboxIndex === null) return null;
-    const item = this.gridItems[this.lightboxIndex];
-    if (!item) return null;
-    const videoId = ytId(item.youtubeUrl);
-    const type = item.isImage ? 'IMAGE' : item.isLocalVideo ? 'LOCAL_VIDEO' : 'YOUTUBE';
-    const src = item.isImage
-      ? item.thumbSrc
-      : item.isLocalVideo
-        ? item.videoSrc
-        : (videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0` : '');
-    return { type, src, title: item.title };
-  }
-
-  get lightboxCounter() {
-    if (this.lightboxIndex === null) return '';
-    return (this.lightboxIndex + 1) + ' / ' + this.gridItems.length;
-  }
-
-  get hasMultiple()        { return this.gridItems.length > 1; }
-  get photoCount()         { return this.items.filter(i => i.mediaType === 'IMAGE').length; }
-  get videoCount()         { return this.items.filter(i => i.mediaType === 'VIDEO').length; }
-  get filterIsAll()        { return this.filter === 'ALL'; }
-  get filterIsPhoto()      { return this.filter === 'IMAGE'; }
-  get filterIsVideo()      { return this.filter === 'VIDEO'; }
-  get lightboxIsImage()    { return this.lightbox?.type === 'IMAGE'; }
-  get lightboxIsLocalVideo() { return this.lightbox?.type === 'LOCAL_VIDEO'; }
+  get photoCount()    { return this.items.filter(i => i.mediaType === 'IMAGE').length; }
+  get videoCount()    { return this.items.filter(i => i.mediaType === 'VIDEO').length; }
+  get filterIsAll()   { return this.filter === 'ALL'; }
+  get filterIsPhoto() { return this.filter === 'IMAGE'; }
+  get filterIsVideo() { return this.filter === 'VIDEO'; }
 
   @action setFilter(f) {
     this.filter = f;
-    this.lightboxIndex = null;
+    this._closeLightbox();
   }
 
-  @action
-  open(item) {
+  @action open(item) {
     const idx = this.gridItems.findIndex(i => i.id === item.id);
-    this.lightboxIndex = idx >= 0 ? idx : 0;
+    this._lightboxIndex = idx >= 0 ? idx : 0;
+    this._openLightbox();
   }
 
-  @action
-  prev(e) {
-    e?.stopPropagation();
-    if (this.lightboxIndex === null) return;
-    this.lightboxIndex = (this.lightboxIndex - 1 + this.gridItems.length) % this.gridItems.length;
+  @action prev() {
+    if (this._lightboxIndex === null) return;
+    this._lightboxIndex = (this._lightboxIndex - 1 + this.gridItems.length) % this.gridItems.length;
+    this._openLightbox();
   }
 
-  @action
-  next(e) {
-    e?.stopPropagation();
-    if (this.lightboxIndex === null) return;
-    this.lightboxIndex = (this.lightboxIndex + 1) % this.gridItems.length;
+  @action next() {
+    if (this._lightboxIndex === null) return;
+    this._lightboxIndex = (this._lightboxIndex + 1) % this.gridItems.length;
+    this._openLightbox();
   }
 
-  @action stopProp(e) { e.stopPropagation(); }
-  @action close()     { this.lightboxIndex = null; }
+  @action close() {
+    this._closeLightbox();
+  }
+
+  _openLightbox() {
+    this._closeLightbox();
+    const item = this.gridItems[this._lightboxIndex];
+    if (!item) return;
+
+    // Build overlay as a plain div appended to body.
+    // After appending we measure getBoundingClientRect() and correct top/left
+    // in case an ancestor CSS transform/filter creates a non-viewport containing block.
+    const el = document.createElement('div');
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:2147483647;display:flex;align-items:center;justify-content:center;box-sizing:border-box';
+    el.addEventListener('click', () => this._closeLightbox());
+
+    // Close ×
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.style.cssText = 'position:absolute;top:1rem;right:1rem;color:#fff;font-size:2rem;line-height:1;width:2.5rem;height:2.5rem;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer';
+    closeBtn.textContent = '×';
+    closeBtn.addEventListener('click', e => { e.stopPropagation(); this._closeLightbox(); });
+    el.appendChild(closeBtn);
+
+    // Prev / Next
+    if (this.gridItems.length > 1) {
+      const prevBtn = document.createElement('button');
+      prevBtn.type = 'button';
+      prevBtn.setAttribute('aria-label', 'Previous');
+      prevBtn.style.cssText = 'position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#fff;font-size:3rem;line-height:1;width:3rem;height:3rem;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer';
+      prevBtn.innerHTML = '&#8249;';
+      prevBtn.addEventListener('click', e => { e.stopPropagation(); this.prev(); });
+      el.appendChild(prevBtn);
+
+      const nextBtn = document.createElement('button');
+      nextBtn.type = 'button';
+      nextBtn.setAttribute('aria-label', 'Next');
+      nextBtn.style.cssText = 'position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:#fff;font-size:3rem;line-height:1;width:3rem;height:3rem;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer';
+      nextBtn.innerHTML = '&#8250;';
+      nextBtn.addEventListener('click', e => { e.stopPropagation(); this.next(); });
+      el.appendChild(nextBtn);
+    }
+
+    // Media
+    if (item.isImage) {
+      const img = document.createElement('img');
+      img.src = item.thumbSrc;
+      img.alt = item.title || '';
+      img.style.cssText = 'max-height:90vh;max-width:90vw;object-fit:contain;display:block';
+      img.addEventListener('click', e => e.stopPropagation());
+      el.appendChild(img);
+    } else if (item.isLocalVideo) {
+      const vid = document.createElement('video');
+      vid.src = item.videoSrc;
+      vid.controls = true;
+      vid.autoplay = true;
+      vid.style.cssText = 'max-height:90vh;max-width:90vw;outline:none;display:block';
+      vid.addEventListener('click', e => e.stopPropagation());
+      el.appendChild(vid);
+    } else {
+      const id = ytId(item.youtubeUrl);
+      if (id) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:min(90vw,56rem);aspect-ratio:16/9';
+        wrap.addEventListener('click', e => e.stopPropagation());
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+        iframe.style.cssText = 'width:100%;height:100%;border:none';
+        iframe.allowFullscreen = true;
+        iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+        iframe.title = item.title || 'Video';
+        wrap.appendChild(iframe);
+        el.appendChild(wrap);
+      }
+    }
+
+    document.body.appendChild(el);
+
+    // Self-correct position: if an ancestor CSS property (transform, backdrop-filter, etc.)
+    // made it the containing block instead of the viewport, compensate.
+    const rect = el.getBoundingClientRect();
+    if (Math.abs(rect.top) > 1 || Math.abs(rect.left) > 1 ||
+        Math.abs(rect.width - window.innerWidth) > 1 ||
+        Math.abs(rect.height - window.innerHeight) > 1) {
+      el.style.top    = (-rect.top) + 'px';
+      el.style.left   = (-rect.left) + 'px';
+      el.style.width  = window.innerWidth + 'px';
+      el.style.height = window.innerHeight + 'px';
+    }
+
+    this._lightboxEl = el;
+
+    this._keyHandler = e => {
+      if (e.key === 'Escape')     this._closeLightbox();
+      if (e.key === 'ArrowLeft')  this.prev();
+      if (e.key === 'ArrowRight') this.next();
+    };
+    document.addEventListener('keydown', this._keyHandler);
+  }
+
+  _closeLightbox() {
+    if (this._lightboxEl) {
+      this._lightboxEl.remove();
+      this._lightboxEl = null;
+    }
+    if (this._keyHandler) {
+      document.removeEventListener('keydown', this._keyHandler);
+      this._keyHandler = null;
+    }
+    this._lightboxIndex = null;
+  }
 
   <template>
     {{! Filter tabs }}
@@ -188,9 +272,8 @@ export default class GalleryGrid extends Component {
               />
             {{/if}}
 
-            {{! Overlay }}
+            {{! Hover overlay }}
             {{#if item.isImage}}
-              {{! zoom icon on hover }}
               <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
                 <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full bg-white/20 p-3 backdrop-blur-sm">
                   <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
@@ -228,77 +311,5 @@ export default class GalleryGrid extends Component {
         <p class="text-xs text-stone-300 mt-1">Check back soon for photos and videos.</p>
       </div>
     {{/if}}
-
-    {{! Lightbox }}
-    <div
-      class="fixed inset-0 bg-black flex items-center justify-center {{if this.lightbox '' 'hidden'}}"
-      style="z-index:9999"
-      role="dialog"
-      aria-modal="true"
-      {{on "click" this.close}}
-    >
-      {{#if this.lightbox}}
-
-        {{! Close }}
-        <button
-          type="button"
-          style="position:absolute;top:1rem;right:1rem;color:#fff;font-size:2rem;line-height:1;width:2.5rem;height:2.5rem;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer"
-          {{on "click" this.close}}
-          aria-label="Close"
-        >&times;</button>
-
-        {{! Prev }}
-        {{#if this.hasMultiple}}
-          <button
-            type="button"
-            style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#fff;font-size:3rem;line-height:1;width:3rem;height:3rem;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer"
-            {{on "click" this.prev}}
-            aria-label="Previous"
-          >&#8249;</button>
-        {{/if}}
-
-        {{! Next }}
-        {{#if this.hasMultiple}}
-          <button
-            type="button"
-            style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:#fff;font-size:3rem;line-height:1;width:3rem;height:3rem;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer"
-            {{on "click" this.next}}
-            aria-label="Next"
-          >&#8250;</button>
-        {{/if}}
-
-        {{! Image / Video }}
-        {{#if this.lightboxIsImage}}
-          <img
-            src={{this.lightbox.src}}
-            alt={{this.lightbox.title}}
-            style="max-height:calc(100vh - 2rem);max-width:calc(100vw - 8rem);object-fit:contain;display:block"
-            {{on "click" this.stopProp}}
-          />
-        {{else if this.lightboxIsLocalVideo}}
-          <video
-            src={{this.lightbox.src}}
-            controls
-            autoplay
-            style="max-height:calc(100vh - 2rem);max-width:calc(100vw - 8rem);outline:none;display:block"
-            {{on "click" this.stopProp}}
-          ></video>
-        {{else}}
-          <div
-            style="width:min(90vw,56rem);aspect-ratio:16/9"
-            {{on "click" this.stopProp}}
-          >
-            <iframe
-              src={{this.lightbox.src}}
-              style="width:100%;height:100%;border:none"
-              allowfullscreen
-              allow="autoplay; encrypted-media; picture-in-picture"
-              title={{this.lightbox.title}}
-            ></iframe>
-          </div>
-        {{/if}}
-
-      {{/if}}
-    </div>
   </template>
 }

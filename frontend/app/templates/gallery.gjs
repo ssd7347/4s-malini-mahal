@@ -12,12 +12,10 @@ export default class GalleryTemplate extends Component {
   get t() { return T[this.language.lang]; }
 
   <template>
-    <div class="animate-slide-up">
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold text-stone-900 tracking-tight">{{this.t.title}}</h1>
-        <p class="mt-1.5 text-stone-500">{{this.t.subtitle}}</p>
-      </div>
-      <GalleryGrid />
+    <div class="animate-slide-up mb-6">
+      <h1 class="text-2xl font-bold text-stone-900 tracking-tight">{{this.t.title}}</h1>
+      <p class="mt-1.5 text-stone-500">{{this.t.subtitle}}</p>
     </div>
+    <GalleryGrid />
   </template>
 }
