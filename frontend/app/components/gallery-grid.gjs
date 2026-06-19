@@ -108,9 +108,11 @@ export default class GalleryGrid extends Component {
 
   _openLightbox() {
     // Read item BEFORE _closeLightbox() resets _lightboxIndex to null
-    const item = this.gridItems[this._lightboxIndex];
+    const idx = this._lightboxIndex;
+    const item = this.gridItems[idx];
     if (!item) return;
     this._closeLightbox();
+    this._lightboxIndex = idx; // restore after _closeLightbox() nulled it
 
     // Build overlay as a plain div appended to body.
     // After appending we measure getBoundingClientRect() and correct top/left
