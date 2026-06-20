@@ -37,7 +37,7 @@ const T = {
     pricingNote:   'No hidden charges. What you see is what you pay.',
     p1label: 'Full Day',   p1price: '₹32,000', p1note: 'Day before 3 PM → Next day 2 PM',
     p2label: 'Half Day',   p2price: '₹23,000', p2note: 'Morning or Evening slot',
-    p3label: 'Hourly',     p3price: '₹3,000',  p3note: 'Min 2 hrs · Max 4 hrs',
+    p3label: 'Hourly',     p3price: '₹3,000',  p3note: '₹3,000 per hour · Min 2 hrs · Max 4 hrs',
 
     galleryTitle:  'Gallery',
     viewAll:       'View Full Gallery',
@@ -129,7 +129,7 @@ const T = {
     pricingNote:   'மறைமுக கட்டணங்கள் இல்லை. நீங்கள் பார்ப்பதே நீங்கள் செலுத்துவது.',
     p1label: 'முழு நாள்',  p1price: '₹32,000', p1note: 'முந்தைய நாள் 3 மணி → மறுநாள் 2 மணி',
     p2label: 'அரை நாள்',  p2price: '₹23,000', p2note: 'காலை அல்லது மாலை நேரம்',
-    p3label: 'மணிநேரம்',  p3price: '₹3,000',  p3note: 'குறைந்தது 2 மணி · அதிகபட்சம் 4 மணி',
+    p3label: 'மணிநேரம்',  p3price: '₹3,000',  p3note: '₹3,000 ஒரு மணி நேரம் · குறைந்தது 2 மணி · அதிகபட்சம் 4 மணி',
 
     galleryTitle:  'படங்கள்',
     viewAll:       'முழு கேலரி பார்க்கவும்',
