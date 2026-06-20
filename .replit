@@ -1,0 +1,5 @@
+run = "bash start.sh"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
