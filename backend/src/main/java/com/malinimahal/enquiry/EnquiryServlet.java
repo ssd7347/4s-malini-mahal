@@ -3,6 +3,9 @@ package com.malinimahal.enquiry;
 import com.malinimahal.auth.OtpServlet;
 import com.malinimahal.muhurtham.MuhurthamDateDao;
 import com.malinimahal.notification.OwnerNotifier;
+import com.malinimahal.payment.PaymentDao;
+import com.malinimahal.refund.Refund;
+import com.malinimahal.refund.RefundDao;
 import com.malinimahal.web.JsonSupport;
 
 import jakarta.servlet.annotation.WebServlet;
@@ -12,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -33,9 +37,17 @@ public class EnquiryServlet extends HttpServlet {
 
     private final EnquiryDao        dao             = new EnquiryDao();
     private final MuhurthamDateDao  muhurthamDao    = new MuhurthamDateDao();
+    private final PaymentDao        paymentDao      = new PaymentDao();
+    private final RefundDao         refundDao       = new RefundDao();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String postPath = req.getPathInfo();
+        if (postPath != null && postPath.endsWith("/cancel")) {
+            handleCancel(req, resp);
+            return;
+        }
+
         Enquiry input;
         try {
             input = JsonSupport.MAPPER.readValue(req.getInputStream(), Enquiry.class);
@@ -135,6 +147,72 @@ public class EnquiryServlet extends HttpServlet {
             getServletContext().log("Failed to look up enquiry", e);
             JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Could not look up the enquiry. Please try again.");
+        }
+    }
+
+    private void handleCancel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        // path = "/:ref/cancel"
+        String p   = req.getPathInfo();
+        String ref = p.substring(1, p.lastIndexOf('/'));
+
+        HttpSession session = req.getSession(false);
+        String mobile = (session != null) ? (String) session.getAttribute(OtpServlet.ATTR_MOBILE) : null;
+        if (mobile == null) {
+            JsonSupport.error(resp, HttpServletResponse.SC_UNAUTHORIZED, "Not logged in");
+            return;
+        }
+
+        Enquiry enquiry;
+        try {
+            enquiry = dao.findByReference(ref);
+        } catch (Exception e) {
+            JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not load booking");
+            return;
+        }
+
+        if (enquiry == null) {
+            JsonSupport.error(resp, HttpServletResponse.SC_NOT_FOUND, "Booking not found");
+            return;
+        }
+        if (!mobile.equals(enquiry.getMobile())) {
+            JsonSupport.error(resp, HttpServletResponse.SC_FORBIDDEN, "This booking does not belong to your account");
+            return;
+        }
+
+        String status = enquiry.getStatus();
+        if (!"AWAITING_PAYMENT".equals(status) && !"CONFIRMED".equals(status)) {
+            JsonSupport.error(resp, HttpServletResponse.SC_CONFLICT,
+                    "This booking cannot be cancelled (current status: " + status + ")");
+            return;
+        }
+
+        try {
+            boolean hadPayment = "CONFIRMED".equals(status);
+            Refund  refund     = null;
+
+            if (hadPayment) {
+                long advancePaise = paymentDao.getTotalPaidPaise(ref, "ADVANCE");
+                if (advancePaise > 0) {
+                    refund = refundDao.create(ref, enquiry.isMuhurtham(), advancePaise);
+                }
+            }
+
+            dao.updateStatus(ref, "CANCELLED");
+
+            LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+            result.put("success", true);
+            result.put("hadPayment", hadPayment);
+            if (refund != null) {
+                result.put("isMuhurtham",  refund.isMuhurtham());
+                result.put("refundPct",    refund.getRefundPct());
+                result.put("refundPaise",  refund.getRefundPaise());
+            }
+            JsonSupport.write(resp, HttpServletResponse.SC_OK, result);
+
+        } catch (Exception e) {
+            getServletContext().log("Failed to cancel booking " + ref, e);
+            JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Could not cancel the booking. Please try again.");
         }
     }
 

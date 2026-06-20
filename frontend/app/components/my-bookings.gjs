@@ -1,6 +1,9 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
+import { action } from '@ember/object';
 import { service } from '@ember/service';
+import { on } from '@ember/modifier';
+import { fn } from '@ember/helper';
 import { LinkTo } from '@ember/routing';
 import { apiUrl } from 'frontend/utils/api';
 
@@ -45,6 +48,16 @@ const T = {
     payNow: 'Pay Now',
     invoice: 'Invoice',
     notify: 'Notify Hall',
+    cancel: 'Cancel',
+    cancelConfirmTitle: 'Cancel this booking?',
+    cancelConfirmBody: 'This action cannot be undone.',
+    cancelConfirmYes: 'Yes, Cancel Booking',
+    cancelConfirmNo: 'Go Back',
+    cancelling: 'Cancelling…',
+    cancelledNoPayment: 'Booking cancelled. No payment had been made.',
+    cancelledRefund: (amt) => `Booking cancelled. Refund of ₹${amt} will be processed by the admin.`,
+    cancelledNoRefund: 'Booking cancelled. No refund applies (muhurtham date policy).',
+    cancelError: 'Could not cancel. Please try again.',
   },
   ta: {
     title: 'உங்கள் பதிவுகள்',
@@ -54,6 +67,16 @@ const T = {
     payNow: 'கட்டணம் செலுத்துங்கள்',
     invoice: 'விலைப்பட்டியல்',
     notify: 'மண்டபத்தை தெரியப்படுத்துங்கள்',
+    cancel: 'ரத்துசெய்',
+    cancelConfirmTitle: 'இந்த பதிவை ரத்துசெய்யவா?',
+    cancelConfirmBody: 'இந்த செயல் மாற்ற முடியாது.',
+    cancelConfirmYes: 'ஆம், பதிவை ரத்துசெய்',
+    cancelConfirmNo: 'திரும்பு',
+    cancelling: 'ரத்துசெய்கிறது…',
+    cancelledNoPayment: 'பதிவு ரத்துசெய்யப்பட்டது. கட்டணம் செலுத்தப்படவில்லை.',
+    cancelledRefund: (amt) => `பதிவு ரத்துசெய்யப்பட்டது. ₹${amt} திரும்பளிப்பு நிர்வாகியால் செயல்படுத்தப்படும்.`,
+    cancelledNoRefund: 'பதிவு ரத்துசெய்யப்பட்டது. திரும்பளிப்பு இல்லை (முஹூர்த்தம் தேதி கொள்கை).',
+    cancelError: 'ரத்துசெய்ய முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
   },
 };
 
@@ -90,8 +113,11 @@ function buildWaUrl(b, lang) {
 export default class MyBookings extends Component {
   @service language;
 
-  @tracked bookings  = null;
-  @tracked loadError = false;
+  @tracked bookings      = null;
+  @tracked loadError     = false;
+  @tracked cancellingRef = null;
+  @tracked cancelling    = false;
+  @tracked cancelMsg     = null;  // { type: 'success'|'error', text: '...' }
 
   constructor(owner, args) {
     super(owner, args);
@@ -111,13 +137,15 @@ export default class MyBookings extends Component {
     }
   }
 
-  get t()          { return T[this.language.lang]; }
-  get isLoading()  { return this.bookings === null && !this.loadError; }
-  get isEmpty()    { return Array.isArray(this.bookings) && this.bookings.length === 0; }
+  get t()                  { return T[this.language.lang]; }
+  get isLoading()          { return this.bookings === null && !this.loadError; }
+  get isEmpty()            { return Array.isArray(this.bookings) && this.bookings.length === 0; }
+  get cancelMsgIsSuccess() { return this.cancelMsg?.type === 'success'; }
 
   get rows() {
     if (!Array.isArray(this.bookings)) return [];
-    const lang = this.language.lang;
+    const lang         = this.language.lang;
+    const cancellingRef = this.cancellingRef;
     const fl = FUNCTION_LABELS[lang] || FUNCTION_LABELS.en;
     const rl = RENTAL_LABELS[lang]   || RENTAL_LABELS.en;
     const sl = STATUS_LABELS[lang]   || STATUS_LABELS.en;
@@ -136,7 +164,51 @@ export default class MyBookings extends Component {
       waHref:       buildWaUrl(b, lang),
       canPay:       b.status === 'AWAITING_PAYMENT',
       canInvoice:   b.status === 'CONFIRMED' || b.status === 'COMPLETED',
+      canCancel:    b.status === 'AWAITING_PAYMENT' || b.status === 'CONFIRMED',
+      isConfirming: b.reference === cancellingRef,
     }));
+  }
+
+  @action startCancel(ref) {
+    this.cancellingRef = ref;
+    this.cancelMsg     = null;
+  }
+
+  @action dismissCancel() {
+    this.cancellingRef = null;
+  }
+
+  @action async confirmCancel(ref) {
+    this.cancelling = true;
+    try {
+      const res  = await fetch(apiUrl(`/api/enquiries/${ref}/cancel`), { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const t = this.t;
+        let text;
+        if (!data.hadPayment) {
+          text = t.cancelledNoPayment;
+        } else if (data.refundPaise > 0) {
+          const rupees = Math.floor(data.refundPaise / 100).toLocaleString('en-IN');
+          text = t.cancelledRefund(rupees);
+        } else {
+          text = t.cancelledNoRefund;
+        }
+        this.cancelMsg     = { type: 'success', text };
+        this.cancellingRef = null;
+        // reload the list so the cancelled booking shows updated status
+        this.bookings = null;
+        await this.load();
+      } else {
+        this.cancelMsg = { type: 'error', text: data.error || this.t.cancelError };
+        this.cancellingRef = null;
+      }
+    } catch (_) {
+      this.cancelMsg = { type: 'error', text: this.t.cancelError };
+      this.cancellingRef = null;
+    } finally {
+      this.cancelling = false;
+    }
   }
 
   <template>
@@ -148,6 +220,13 @@ export default class MyBookings extends Component {
           + {{this.t.bookNow}}
         </LinkTo>
       </div>
+
+      {{! Cancel result banner }}
+      {{#if this.cancelMsg}}
+        <div class="mx-4 mt-4 rounded-lg px-4 py-3 text-sm font-medium {{if this.cancelMsgIsSuccess 'bg-green-50 border border-green-200 text-green-800' 'bg-red-50 border border-red-200 text-red-700'}}">
+          {{this.cancelMsg.text}}
+        </div>
+      {{/if}}
 
       {{#if this.loadError}}
         <p class="px-5 py-8 text-sm text-center text-stone-400">Could not load bookings. Please refresh the page.</p>
@@ -169,59 +248,104 @@ export default class MyBookings extends Component {
       {{else}}
         <div class="divide-y divide-stone-100">
           {{#each this.rows as |b|}}
-            <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="px-5 py-4 flex flex-col gap-3">
 
-              <div class="flex-1 min-w-0">
-                <div class="flex flex-wrap items-center gap-2 mb-1">
-                  <span class="font-mono text-sm font-bold text-stone-800">{{b.reference}}</span>
-                  <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{b.statusCls}}">
-                    {{b.statusLabel}}
-                  </span>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <span class="font-mono text-sm font-bold text-stone-800">{{b.reference}}</span>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{b.statusCls}}">
+                      {{b.statusLabel}}
+                    </span>
+                  </div>
+                  <p class="text-xs text-stone-500">
+                    {{b.formattedDate}} · {{b.funcLabel}} · {{b.rentalLabel}}
+                  </p>
                 </div>
-                <p class="text-xs text-stone-500">
-                  {{b.formattedDate}} · {{b.funcLabel}} · {{b.rentalLabel}}
-                </p>
+
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                  {{#if b.canPay}}
+                    <LinkTo
+                      @route="payment"
+                      @model={{b.reference}}
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-800 transition-colors active:scale-[0.97]"
+                    >
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
+                      </svg>
+                      {{this.t.payNow}}
+                    </LinkTo>
+                  {{/if}}
+
+                  {{#if b.canInvoice}}
+                    <LinkTo
+                      @route="invoice"
+                      @model={{b.reference}}
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 hover:border-stone-300 transition-colors"
+                    >
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                      </svg>
+                      {{this.t.invoice}}
+                    </LinkTo>
+                  {{/if}}
+
+                  <a
+                    href={{b.waHref}}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 hover:bg-green-100 transition-colors"
+                  >
+                    <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    {{this.t.notify}}
+                  </a>
+
+                  {{#if b.canCancel}}
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 transition-colors"
+                      {{on "click" (fn this.startCancel b.reference)}}
+                    >
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                      {{this.t.cancel}}
+                    </button>
+                  {{/if}}
+                </div>
               </div>
 
-              <div class="flex flex-wrap items-center gap-2 shrink-0">
-                {{#if b.canPay}}
-                  <LinkTo
-                    @route="payment"
-                    @model={{b.reference}}
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-800 transition-colors active:scale-[0.97]"
-                  >
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
-                    </svg>
-                    {{this.t.payNow}}
-                  </LinkTo>
-                {{/if}}
-
-                {{#if b.canInvoice}}
-                  <LinkTo
-                    @route="invoice"
-                    @model={{b.reference}}
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 hover:border-stone-300 transition-colors"
-                  >
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
-                    </svg>
-                    {{this.t.invoice}}
-                  </LinkTo>
-                {{/if}}
-
-                <a
-                  href={{b.waHref}}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 hover:bg-green-100 transition-colors"
-                >
-                  <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                  </svg>
-                  {{this.t.notify}}
-                </a>
-              </div>
+              {{! Inline confirmation panel }}
+              {{#if b.isConfirming}}
+                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                  <p class="text-sm font-semibold text-red-800">{{this.t.cancelConfirmTitle}}</p>
+                  <p class="mt-0.5 text-xs text-red-600">{{this.t.cancelConfirmBody}}</p>
+                  <div class="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={{this.cancelling}}
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-800 transition-colors disabled:opacity-60"
+                      {{on "click" (fn this.confirmCancel b.reference)}}
+                    >
+                      {{#if this.cancelling}}
+                        {{this.t.cancelling}}
+                      {{else}}
+                        {{this.t.cancelConfirmYes}}
+                      {{/if}}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={{this.cancelling}}
+                      class="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 transition-colors disabled:opacity-60"
+                      {{on "click" this.dismissCancel}}
+                    >
+                      {{this.t.cancelConfirmNo}}
+                    </button>
+                  </div>
+                </div>
+              {{/if}}
 
             </div>
           {{/each}}
