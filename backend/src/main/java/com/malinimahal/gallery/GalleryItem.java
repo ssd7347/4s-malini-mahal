@@ -20,6 +20,11 @@ public class GalleryItem {
     public String getFilename()             { return filename; }
     public void setFilename(String v)       { this.filename = v; }
 
+    /** Full URL to the media (Cloudinary URL or null for locally-served files). */
+    private String mediaUrl;
+    public String getMediaUrl()             { return mediaUrl; }
+    public void setMediaUrl(String v)       { this.mediaUrl = v; }
+
     public String getYoutubeUrl()           { return youtubeUrl; }
     public void setYoutubeUrl(String v)     { this.youtubeUrl = v; }
 

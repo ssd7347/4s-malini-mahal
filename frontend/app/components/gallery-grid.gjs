@@ -57,17 +57,18 @@ export default class GalleryGrid extends Component {
   get gridItems() {
     const src = this.filter === 'ALL' ? this.items : this.items.filter(i => i.mediaType === this.filter);
     return src.map(item => {
-      const isLocalVideo = item.mediaType === 'VIDEO' && !!item.filename;
+      const isLocalVideo = item.mediaType === 'VIDEO' && !!item.filename && !item.mediaUrl;
+      const fileSrc = item.mediaUrl || (item.filename ? apiUrl('/api/media/' + item.filename) : null);
       return {
         ...item,
         isImage: item.mediaType === 'IMAGE',
-        isLocalVideo,
+        isLocalVideo: isLocalVideo || (item.mediaType === 'VIDEO' && !!item.mediaUrl),
         thumbSrc: item.mediaType === 'IMAGE'
-          ? apiUrl('/api/media/' + item.filename)
-          : isLocalVideo
+          ? fileSrc
+          : (isLocalVideo || item.mediaUrl)
             ? null
             : (ytId(item.youtubeUrl) ? `https://img.youtube.com/vi/${ytId(item.youtubeUrl)}/hqdefault.jpg` : ''),
-        videoSrc: isLocalVideo ? apiUrl('/api/media/' + item.filename) : null,
+        videoSrc: (isLocalVideo || (item.mediaType === 'VIDEO' && !!item.mediaUrl)) ? fileSrc : null,
         timeAgo: timeAgo(item.createdAt),
       };
     });

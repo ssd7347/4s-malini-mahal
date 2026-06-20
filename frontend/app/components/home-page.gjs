@@ -261,13 +261,13 @@ export default class HomePage extends Component {
       const res = await fetch(apiUrl('/api/gallery'));
       if (res.ok) {
         const data = await res.json();
-        this._galleryItems = data.filter(i => i.mediaType === 'IMAGE' && i.filename);
+        this._galleryItems = data.filter(i => i.mediaType === 'IMAGE' && (i.filename || i.mediaUrl));
       }
     } catch (_) {}
   }
 
   get t()         { return T[this.language.lang]; }
-  _imgSrc(idx)    { const it = this._galleryItems[idx]; return it ? apiUrl('/api/media/' + it.filename) : null; }
+  _imgSrc(idx)    { const it = this._galleryItems[idx]; return it ? (it.mediaUrl || apiUrl('/api/media/' + it.filename)) : null; }
   get heroImage() { return this._imgSrc(0); }
   get gi0()       { return this._imgSrc(0); }
   get gi1()       { return this._imgSrc(1); }

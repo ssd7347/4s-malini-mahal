@@ -1,5 +1,7 @@
 package com.malinimahal.gallery;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.malinimahal.web.JsonSupport;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -29,6 +31,12 @@ public class AdminGalleryServlet extends HttpServlet {
     private final GalleryDao dao = new GalleryDao();
     private static final Set<String> IMAGE_ALLOWED = Set.of("jpg", "jpeg", "png", "webp");
     private static final Set<String> VIDEO_ALLOWED = Set.of("mp4", "webm", "mov");
+
+    private static final Cloudinary CLOUDINARY;
+    static {
+        String url = System.getenv("CLOUDINARY_URL");
+        CLOUDINARY = (url != null && !url.isBlank()) ? new Cloudinary(url) : null;
+    }
 
     private Path uploadDir() {
         String dir = System.getenv("UPLOAD_DIR");
@@ -77,14 +85,35 @@ public class AdminGalleryServlet extends HttpServlet {
                     "Allowed images: JPG, PNG, WebP — Allowed videos: MP4, WebM, MOV");
             return;
         }
-        String filename = UUID.randomUUID() + "." + ext;
-        Path dir = uploadDir();
-        Files.createDirectories(dir);
-        Files.copy(filePart.getInputStream(), dir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
-
         String title = req.getParameter("title");
-        GalleryItem item = dao.add(mediaType, filename, null, title != null ? title.strip() : null);
+        String storedFilename;
+        if (CLOUDINARY != null) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> result = CLOUDINARY.uploader().upload(
+                filePart.getInputStream(),
+                ObjectUtils.asMap(
+                    "folder", "malinimahal",
+                    "resource_type", VIDEO_ALLOWED.contains(ext) ? "video" : "image"
+                )
+            );
+            storedFilename = (String) result.get("secure_url");
+        } else {
+            storedFilename = UUID.randomUUID() + "." + ext;
+            Path dir = uploadDir();
+            Files.createDirectories(dir);
+            Files.copy(filePart.getInputStream(), dir.resolve(storedFilename), StandardCopyOption.REPLACE_EXISTING);
+        }
+        GalleryItem item = dao.add(mediaType, storedFilename, null, title != null ? title.strip() : null);
         JsonSupport.write(resp, HttpServletResponse.SC_CREATED, item);
+    }
+
+    private static String cloudinaryPublicId(String url) {
+        int idx = url.indexOf("/upload/");
+        if (idx < 0) return url;
+        String after = url.substring(idx + "/upload/".length());
+        if (after.matches("v\\d+/.*")) after = after.substring(after.indexOf('/') + 1);
+        int dot = after.lastIndexOf('.');
+        return dot >= 0 ? after.substring(0, dot) : after;
     }
 
     @SuppressWarnings("unchecked")
@@ -124,8 +153,16 @@ public class AdminGalleryServlet extends HttpServlet {
             }
             dao.remove(id);
             if (item.getFilename() != null) {
-                try { Files.deleteIfExists(uploadDir().resolve(item.getFilename())); }
-                catch (IOException ex) { getServletContext().log("File delete failed", ex); }
+                if (item.getFilename().startsWith("https://") && CLOUDINARY != null) {
+                    try {
+                        String publicId = cloudinaryPublicId(item.getFilename());
+                        String rtype = "VIDEO".equals(item.getMediaType()) ? "video" : "image";
+                        CLOUDINARY.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", rtype));
+                    } catch (Exception ex) { getServletContext().log("Cloudinary delete failed", ex); }
+                } else {
+                    try { Files.deleteIfExists(uploadDir().resolve(item.getFilename())); }
+                    catch (IOException ex) { getServletContext().log("File delete failed", ex); }
+                }
             }
             resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
         } catch (Exception e) {

@@ -63,7 +63,11 @@ public class GalleryDao {
         GalleryItem item = new GalleryItem();
         item.setId(rs.getLong("id"));
         item.setMediaType(rs.getString("media_type"));
-        item.setFilename(rs.getString("filename"));
+        String filename = rs.getString("filename");
+        item.setFilename(filename);
+        if (filename != null && filename.startsWith("https://")) {
+            item.setMediaUrl(filename);
+        }
         item.setYoutubeUrl(rs.getString("youtube_url"));
         item.setTitle(rs.getString("title"));
         item.setDisplayOrder(rs.getInt("display_order"));
