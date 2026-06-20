@@ -72,8 +72,8 @@ const T = {
     message:            'Message',
     optional:           '(optional)',
     msgPlaceholder:     'Any specific requirements…',
-    submit:             'Submit Booking',
-    submitting:         'Submitting…',
+    submit:             'Book Now',
+    submitting:         'Booking…',
     loginPrompt:        'Log in to confirm your booking',
     loginPromptHint:    'Your details above will be ready — just log in and submit.',
     loginBtn:           'Log In to Continue',
@@ -130,8 +130,8 @@ const T = {
     message:            'செய்தி',
     optional:           '(விருப்பமானது)',
     msgPlaceholder:     'ஏதாவது குறிப்பிட்ட தேவைகள்…',
-    submit:             'பதிவை சமர்ப்பிக்கவும்',
-    submitting:         'சமர்ப்பிக்கிறது…',
+    submit:             'இப்போது பதிவிடுங்கள்',
+    submitting:         'பதிவு செய்கிறது…',
     loginPrompt:        'பதிவை உறுதிப்படுத்த உள்நுழைக',
     loginPromptHint:    'மேலே உள்ள விவரங்கள் தயாராக இருக்கும் — உள்நுழைந்து சமர்ப்பிக்கவும்.',
     loginBtn:           'தொடர உள்நுழைக',
@@ -202,21 +202,7 @@ export default class EnquiryForm extends Component {
         this.error = data.error || this.t.errGeneric;
       } else {
         const data = await res.json();
-        const allOptions = Object.values(FUNCTION_TYPES).flat();
-        const ftOpt = allOptions.find(o => o.value === payload.functionType);
-        const lang = this.language.lang;
-        this.submission = {
-          reference:         data.reference,
-          customerName:      payload.customerName,
-          eventDate:         payload.eventDate,
-          functionTypeLabel: ftOpt ? ftOpt[lang] : payload.functionType,
-        };
-        this.reference    = data.reference;
-        this.availability = null;
-        this.isMuhurtham  = false;
-        this.bookedSlots  = [];
-        this.rentalType   = '';
-        this.selectedDate = '';
+        this.router.transitionTo('payment', data.reference);
       }
     } catch (_) {
       this.error = this.t.errServer;

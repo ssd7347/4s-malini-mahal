@@ -1,14 +1,14 @@
 import Component from '@glimmer/component';
 import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
+import MyBookings from 'frontend/components/my-bookings';
 
 const T = {
   en: {
     badge:        'Thiruthangal, Sivakasi',
     tagline:      'A banquet hall for weddings, receptions and family functions — with AC facilities for up to 200 guests.',
-    submitBooking:'Submit a Booking',
+    submitBooking:'Book Now',
     submitEnquiry:'Submit an Enquiry',
-    trackEnquiry: 'Track Enquiry',
     capacity:     'Capacity',
     capacityDesc: 'Floor 1 · 120 guests · Floor 2 · 80 guests · Combined up to 200',
     facilities:   'Facilities',
@@ -30,9 +30,8 @@ const T = {
   ta: {
     badge:        'திருத்தங்கல், சிவகாசி',
     tagline:      'திருமணங்கள், வரவேற்புகள் மற்றும் குடும்ப விழாக்களுக்கான விழா மண்டபம் — 200 விருந்தினர்கள் வரை ஏர்கண்டிஷன் வசதியுடன்.',
-    submitBooking:'பதிவு செய்யுங்கள்',
+    submitBooking:'இப்போது பதிவிடுங்கள்',
     submitEnquiry:'விசாரணை செய்யுங்கள்',
-    trackEnquiry: 'விசாரணையை கண்காணிக்க',
     capacity:     'அமர்வு திறன்',
     capacityDesc: 'தளம் 1 · 120 பேர் · தளம் 2 · 80 பேர் · மொத்தம் 200 வரை',
     facilities:   'வசதிகள்',
@@ -88,14 +87,13 @@ export default class HomePage extends Component {
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
             </svg>
           </LinkTo>
-          <LinkTo
-            @route="track"
-            class="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-6 py-3 text-sm font-semibold text-stone-700 shadow-sm hover:bg-stone-50 transition-colors"
-          >
-            {{this.t.trackEnquiry}}
-          </LinkTo>
         </div>
       </div>
+
+      {{! Your Bookings — shown only when logged in }}
+      {{#if this.auth.isLoggedIn}}
+        <MyBookings />
+      {{/if}}
 
       {{! Info cards }}
       <div id="about" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -22,8 +22,8 @@ public class EnquiryDao {
         final String sql = """
                 INSERT INTO enquiries
                     (reference, customer_name, mobile, event_date, function_type, rental_type, message,
-                     start_datetime, end_datetime, is_muhurtham)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     start_datetime, end_datetime, is_muhurtham, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'AWAITING_PAYMENT')
                 RETURNING id, reference, status, created_at, start_datetime, end_datetime, is_muhurtham
                 """;
 
@@ -97,6 +97,28 @@ public class EnquiryDao {
                 return mapRow(rs);
             }
         }
+    }
+
+    public List<Enquiry> listByMobile(String mobile) throws SQLException {
+        final String sql = """
+                SELECT id, reference, customer_name, mobile, event_date,
+                       function_type, rental_type, message, status, created_at,
+                       start_datetime, end_datetime,
+                       elec_units, gas_kg, decoration_charge_paise,
+                       early_entry_charge_paise, key_loss_charge_paise, is_muhurtham
+                FROM enquiries
+                WHERE mobile = ?
+                ORDER BY created_at DESC
+                """;
+        List<Enquiry> out = new ArrayList<>();
+        try (Connection conn = Database.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, mobile);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(mapRow(rs));
+            }
+        }
+        return out;
     }
 
     public List<Enquiry> listAll() throws SQLException {

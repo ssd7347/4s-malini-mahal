@@ -1,5 +1,6 @@
 package com.malinimahal.enquiry;
 
+import com.malinimahal.auth.OtpServlet;
 import com.malinimahal.muhurtham.MuhurthamDateDao;
 import com.malinimahal.notification.OwnerNotifier;
 import com.malinimahal.web.JsonSupport;
@@ -8,6 +9,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -101,8 +103,29 @@ public class EnquiryServlet extends HttpServlet {
             JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing enquiry reference");
             return;
         }
+        String sub = path.substring(1);
+
+        if ("my".equals(sub)) {
+            HttpSession session = req.getSession(false);
+            String mobile = (session != null)
+                    ? (String) session.getAttribute(OtpServlet.ATTR_MOBILE) : null;
+            if (mobile == null) {
+                JsonSupport.error(resp, HttpServletResponse.SC_UNAUTHORIZED, "Not logged in");
+                return;
+            }
+            try {
+                List<com.malinimahal.enquiry.Enquiry> list = dao.listByMobile(mobile);
+                JsonSupport.write(resp, HttpServletResponse.SC_OK, list);
+            } catch (Exception e) {
+                getServletContext().log("Failed to list enquiries for mobile", e);
+                JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "Could not load your bookings. Please try again.");
+            }
+            return;
+        }
+
         try {
-            Enquiry found = dao.findByReference(path.substring(1));
+            Enquiry found = dao.findByReference(sub);
             if (found == null) {
                 JsonSupport.error(resp, HttpServletResponse.SC_NOT_FOUND, "No enquiry found for that reference");
                 return;
