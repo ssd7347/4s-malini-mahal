@@ -7,6 +7,7 @@ import { LinkTo } from '@ember/routing';
 import { apiUrl } from 'frontend/utils/api';
 import ClockTimePicker from 'frontend/components/clock-time-picker';
 import DatePickerCalendar from 'frontend/components/date-picker-calendar';
+import DateRangeCalendar from 'frontend/components/date-range-calendar';
 
 
 const INPUT_CLS = 'mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-stone-900 placeholder:text-stone-400 transition-[border-color,box-shadow] duration-150 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 focus:outline-none';
@@ -416,6 +417,16 @@ export default class EnquiryForm extends Component {
   }
 
   @action
+  onRangeChange({ checkIn, checkOut }) {
+    const prevCheckIn = this.selectedDate;
+    this.selectedDate = checkIn;
+    this.endDate = checkOut || '';
+    if (checkIn !== prevCheckIn) {
+      this.checkDate(checkIn);
+    }
+  }
+
+  @action
   goToLogin() {
     if (this._pendingPayload) {
       sessionStorage.setItem('mm_pending_booking', JSON.stringify(this._pendingPayload));
@@ -595,25 +606,12 @@ export default class EnquiryForm extends Component {
 
         {{! Multi-day date pickers (CSS transition) }}
         <div class={{this.multiDayPickerCls}}>
-          <div>
-            <label class="block text-sm font-medium text-stone-700 mb-1.5">{{this.t.checkInDate}}</label>
-            <DatePickerCalendar
-              @value={{this.selectedDate}}
-              @min={{this.todayIso}}
-              @onChange={{this.onDateChange}}
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-stone-700 mb-1.5">
-              {{this.t.checkOutDate}}
-              <span class="ml-1 font-normal text-stone-400 text-xs">{{this.t.singleDayHint}}</span>
-            </label>
-            <DatePickerCalendar
-              @value={{this.endDate}}
-              @min={{this.selectedDate}}
-              @onChange={{this.onEndDateChange}}
-            />
-          </div>
+          <DateRangeCalendar
+            @checkIn={{this.selectedDate}}
+            @checkOut={{this.endDate}}
+            @min={{this.todayIso}}
+            @onChange={{this.onRangeChange}}
+          />
           {{#if this.isMultiDay}}
             <div class="rounded-xl border border-rose-200 bg-white shadow-sm overflow-hidden animate-fade-in">
               <div class="flex items-center justify-between px-4 py-3 bg-rose-700">
