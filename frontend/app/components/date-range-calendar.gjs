@@ -29,7 +29,7 @@ export default class DateRangeCalendar extends Component {
   @tracked viewYear;
   @tracked viewMonth;
   @tracked muhurthamSet = new Set();
-  @tracked hoverDate = null;
+  @tracked _hoverIso = null;
 
   constructor(owner, args) {
     super(owner, args);
@@ -62,13 +62,12 @@ export default class DateRangeCalendar extends Component {
   get checkIn()  { return this.args.checkIn  || ''; }
   get checkOut() { return this.args.checkOut || ''; }
 
-  // Effective range end: confirmed checkout or hover preview
   get _rangeEnd() {
-    const ci = this.checkIn;
-    const co = this.checkOut;
-    const hov = this.hoverDate;
+    const ci  = this.checkIn;
+    const co  = this.checkOut;
+    const hov = this._hoverIso;
     if (!ci) return '';
-    if (co) return co;
+    if (co)  return co;
     if (hov && hov > ci) return hov;
     return '';
   }
@@ -88,7 +87,7 @@ export default class DateRangeCalendar extends Component {
     const cells = [];
 
     for (let i = firstDow - 1; i >= 0; i--) {
-      cells.push({ key: `p${i}`, label: daysInPrev - i, outside: true });
+      cells.push({ key: `p${i}`, label: daysInPrev - i, outside: true, iso: null });
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -97,42 +96,36 @@ export default class DateRangeCalendar extends Component {
       const isMuhurtham = this.muhurthamSet.has(iso);
       const isToday     = iso === this.today;
       const isCheckIn   = iso === ci;
-      const isCheckOut  = ci && co && iso === co;
+      const isCheckOut  = !!(ci && co && iso === co);
       const isInRange   = !!(ci && re && iso > ci && iso < re);
-      const isHoverEnd  = !co && this.hoverDate === iso && iso > ci;
+      const isHoverEnd  = !co && this._hoverIso === iso && iso > ci;
       const hasRange    = !!(ci && re && re > ci);
+      const isEndpoint  = isCheckIn || isCheckOut;
 
-      // Wrapper: provides the range background strip
       let wrapCls = 'h-10 flex items-center justify-center';
       if (isCheckIn && isCheckOut) {
-        // single-day — no strip needed
+        // single-day — no strip
       } else if (isCheckIn && hasRange) {
-        wrapCls += ' bg-gradient-to-r from-transparent from-50% to-rose-100 to-50%';
+        wrapCls += ' bg-gradient-to-r from-transparent to-rose-100';
       } else if (isCheckOut) {
-        wrapCls += ' bg-gradient-to-r from-rose-100 from-50% to-transparent to-50%';
+        wrapCls += ' bg-gradient-to-r from-rose-100 to-transparent';
       } else if (isHoverEnd) {
-        wrapCls += ' bg-gradient-to-r from-rose-50 from-50% to-transparent to-50%';
+        wrapCls += ' bg-gradient-to-r from-rose-50 to-transparent';
       } else if (isInRange) {
         wrapCls += ' bg-rose-100';
       }
 
-      // Button: the actual clickable cell
-      let cls = 'relative flex flex-col items-center justify-center h-9 w-9 text-sm transition-all duration-100 ';
-
-      if (isCheckIn && isCheckOut) {
-        cls += 'rounded-full bg-rose-700 text-white font-bold shadow-md';
-      } else if (isCheckIn) {
-        cls += 'rounded-full bg-rose-700 text-white font-bold shadow-md';
-      } else if (isCheckOut) {
-        cls += 'rounded-full bg-rose-700 text-white font-bold shadow-md';
+      let cls = 'relative flex flex-col items-center justify-center h-9 w-9 text-sm transition-colors duration-100 ';
+      if (isCheckIn || isCheckOut) {
+        cls += 'rounded-full bg-rose-700 text-white font-bold shadow-md cursor-pointer';
       } else if (isHoverEnd) {
         cls += 'rounded-full bg-rose-200 text-rose-800 font-semibold cursor-pointer';
       } else if (isInRange) {
         cls += isMuhurtham
-          ? 'bg-amber-200 text-amber-900 font-semibold cursor-pointer hover:bg-amber-300 rounded-sm'
-          : 'bg-transparent text-rose-800 font-medium cursor-pointer hover:bg-rose-200 rounded-sm';
+          ? 'bg-amber-200 text-amber-900 font-semibold cursor-pointer hover:bg-amber-300'
+          : 'bg-transparent text-rose-800 font-medium cursor-pointer hover:bg-rose-200';
       } else if (isPast) {
-        cls += 'rounded-full text-stone-300 cursor-not-allowed font-normal';
+        cls += 'rounded-full text-stone-300 cursor-not-allowed';
       } else if (isMuhurtham && isToday) {
         cls += 'rounded-full bg-amber-100 text-amber-900 font-semibold ring-2 ring-rose-400 cursor-pointer hover:bg-amber-200';
       } else if (isMuhurtham) {
@@ -143,17 +136,13 @@ export default class DateRangeCalendar extends Component {
         cls += 'rounded-full text-stone-700 font-medium cursor-pointer hover:bg-stone-100';
       }
 
-      cells.push({
-        key: iso, label: d, outside: false, iso, isPast, isMuhurtham,
-        isCheckIn, isCheckOut, isInRange, isToday,
-        isEndpoint: isCheckIn || isCheckOut,
-        wrapCls, cls,
-      });
+      cells.push({ key: iso, label: d, outside: false, iso, isPast, isMuhurtham,
+                   isEndpoint, wrapCls, cls });
     }
 
     let next = 1;
     while (cells.length % 7 !== 0) {
-      cells.push({ key: `n${next}`, label: next++, outside: true });
+      cells.push({ key: `n${next}`, label: next++, outside: true, iso: null });
     }
 
     const ws = [];
@@ -161,12 +150,11 @@ export default class DateRangeCalendar extends Component {
     return ws;
   }
 
-  // Header display
   get lang()           { return this.language.lang; }
-  get pickingCheckIn() { return !this.checkIn || (this.checkIn && this.checkOut); }
+  get pickingCheckIn() { return !this.checkIn || !!(this.checkIn && this.checkOut); }
   get pickingCheckOut(){ return !!(this.checkIn && !this.checkOut); }
 
-  get checkInLabel()  { return this.lang === 'ta' ? 'நுழைவு தேதி'  : 'Check-in'; }
+  get checkInLabel()  { return this.lang === 'ta' ? 'நுழைவு தேதி'   : 'Check-in'; }
   get checkOutLabel() { return this.lang === 'ta' ? 'வெளியேறு தேதி' : 'Check-out'; }
   get selectHint()    { return this.lang === 'ta' ? 'தேர்வு செய்யவும்' : 'Select date'; }
 
@@ -187,55 +175,53 @@ export default class DateRangeCalendar extends Component {
     else this.viewMonth += 1;
   }
 
-  @action pick(cell) {
-    if (cell.outside || cell.isPast) return;
+  // Receives the ISO string directly — avoids stale cell-object captures
+  @action pickIso(iso) {
+    if (!iso || iso < this.min) return;
     const ci = this.checkIn;
     const co = this.checkOut;
-    this.hoverDate = null;
+    this._hoverIso = null;
 
     if (!ci || (ci && co)) {
-      // No check-in yet, or both already set → start fresh
-      this.args.onChange?.({ checkIn: cell.iso, checkOut: '' });
-    } else if (cell.iso <= ci) {
-      // Clicked before/on check-in → reset check-in
-      this.args.onChange?.({ checkIn: cell.iso, checkOut: '' });
+      this.args.onChange?.({ checkIn: iso, checkOut: '' });
+    } else if (iso <= ci) {
+      this.args.onChange?.({ checkIn: iso, checkOut: '' });
     } else {
-      // Have check-in, clicked after → set check-out
-      this.args.onChange?.({ checkIn: ci, checkOut: cell.iso });
+      this.args.onChange?.({ checkIn: ci, checkOut: iso });
     }
   }
 
-  @action onHover(cell) {
-    if (cell.outside || cell.isPast) { this.hoverDate = null; return; }
-    if (this.checkIn && !this.checkOut) {
-      this.hoverDate = cell.iso > this.checkIn ? cell.iso : null;
+  @action hoverIso(iso) {
+    if (!iso || iso < this.min) { this._hoverIso = null; return; }
+    const ci = this.checkIn;
+    const co = this.checkOut;
+    if (ci && !co && iso > ci) {
+      this._hoverIso = iso;
+    } else {
+      this._hoverIso = null;
     }
   }
 
-  @action clearHover() { this.hoverDate = null; }
+  @action clearHover() { this._hoverIso = null; }
 
   <template>
     <div class="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
 
       {{! Check-in / Check-out header }}
       <div class="grid grid-cols-2 border-b border-stone-200">
-        <div class="px-4 py-3 border-r border-stone-200 transition-colors {{if this.pickingCheckIn 'bg-rose-50' ''}}">
+        <div class="px-4 py-3 border-r border-stone-200 {{if this.pickingCheckIn 'bg-rose-50' ''}}">
           <p class="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5">
             {{this.checkInLabel}}
-            {{#if this.pickingCheckIn}}
-              <span class="ml-1 text-rose-500">←</span>
-            {{/if}}
+            {{#if this.pickingCheckIn}}<span class="ml-1 text-rose-500">←</span>{{/if}}
           </p>
           <p class="text-base font-bold {{if this.checkIn 'text-rose-700' 'text-stone-400'}}">
             {{this.checkInDisplay}}
           </p>
         </div>
-        <div class="px-4 py-3 transition-colors {{if this.pickingCheckOut 'bg-rose-50' ''}}">
+        <div class="px-4 py-3 {{if this.pickingCheckOut 'bg-rose-50' ''}}">
           <p class="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5">
             {{this.checkOutLabel}}
-            {{#if this.pickingCheckOut}}
-              <span class="ml-1 text-rose-500">←</span>
-            {{/if}}
+            {{#if this.pickingCheckOut}}<span class="ml-1 text-rose-500">←</span>{{/if}}
           </p>
           <p class="text-base font-bold {{if this.checkOut 'text-rose-700' 'text-stone-400'}}">
             {{this.checkOutDisplay}}
@@ -245,27 +231,19 @@ export default class DateRangeCalendar extends Component {
 
       {{! Month navigation }}
       <div class="flex items-center justify-between px-4 py-3 border-b border-stone-100 bg-stone-50">
-        <button
-          type="button"
+        <button type="button"
           disabled={{this.cantGoPrev}}
-          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-200 disabled:opacity-25 disabled:cursor-not-allowed"
-          {{on "click" this.prevMonth}}
-        >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200 disabled:opacity-25 disabled:cursor-not-allowed"
+          {{on "click" this.prevMonth}}>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
           </svg>
         </button>
-
-        <span class="text-sm font-semibold text-stone-800 tracking-wide select-none">
-          {{this.headerLabel}}
-        </span>
-
-        <button
-          type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-200"
-          {{on "click" this.nextMonth}}
-        >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+        <span class="text-sm font-semibold text-stone-800 select-none">{{this.headerLabel}}</span>
+        <button type="button"
+          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200"
+          {{on "click" this.nextMonth}}>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
           </svg>
         </button>
@@ -278,8 +256,8 @@ export default class DateRangeCalendar extends Component {
         {{/each}}
       </div>
 
-      {{! Calendar grid — no gap so range strip is continuous }}
-      <div class="px-3 pb-3 space-y-1" {{on "mouseleave" this.clearHover}}>
+      {{! Calendar grid }}
+      <div class="px-3 pb-3 space-y-0.5" {{on "mouseleave" this.clearHover}}>
         {{#each this.weeks as |week|}}
           <div class="grid grid-cols-7">
             {{#each week as |cell|}}
@@ -290,8 +268,8 @@ export default class DateRangeCalendar extends Component {
                   <button
                     type="button"
                     class={{cell.cls}}
-                    {{on "click" (fn this.pick cell)}}
-                    {{on "mouseenter" (fn this.onHover cell)}}
+                    {{on "click" (fn this.pickIso cell.iso)}}
+                    {{on "mouseenter" (fn this.hoverIso cell.iso)}}
                   >
                     <span class="leading-none">{{cell.label}}</span>
                     {{#if cell.isMuhurtham}}
