@@ -11,6 +11,7 @@ Router.map(function () {
   this.route('gallery');
   this.route('amenities');
   this.route('booking');
+  this.route('availability');
   this.route('enquiry');
   this.route('track');
   this.route('contact');
