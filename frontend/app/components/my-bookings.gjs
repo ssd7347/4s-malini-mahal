@@ -6,6 +6,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { LinkTo } from '@ember/routing';
 import { apiUrl } from 'frontend/utils/api';
+import DatePickerCalendar from 'frontend/components/date-picker-calendar';
 
 const FUNCTION_LABELS = {
   en: {
@@ -58,6 +59,16 @@ const T = {
     cancelledRefund: (amt) => `Booking cancelled. Refund of ₹${amt} will be processed by the admin.`,
     cancelledNoRefund: 'Booking cancelled. No refund applies (muhurtham date policy).',
     cancelError: 'Could not cancel. Please try again.',
+    changeDate: 'Change Date',
+    tooCloseToChange: 'Date changes require at least 3 days notice before the function.',
+    tooCloseToChangeMuhurtham: 'Muhurtham date changes require at least 10 days notice before the function.',
+    rescheduleTitle: 'Change Booking Date',
+    rescheduleLabel: 'Select new date',
+    rescheduleConfirm: 'Confirm Change',
+    rescheduling: 'Updating…',
+    rescheduleBack: 'Go Back',
+    rescheduleSuccess: (date) => `Booking rescheduled to ${date}. Admin has been notified.`,
+    rescheduleError: 'Could not reschedule. Please try again.',
   },
   ta: {
     title: 'உங்கள் பதிவுகள்',
@@ -77,10 +88,29 @@ const T = {
     cancelledRefund: (amt) => `பதிவு ரத்துசெய்யப்பட்டது. ₹${amt} திரும்பளிப்பு நிர்வாகியால் செயல்படுத்தப்படும்.`,
     cancelledNoRefund: 'பதிவு ரத்துசெய்யப்பட்டது. திரும்பளிப்பு இல்லை (முஹூர்த்தம் தேதி கொள்கை).',
     cancelError: 'ரத்துசெய்ய முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+    changeDate: 'தேதி மாற்று',
+    tooCloseToChange: 'நிகழ்விற்கு குறைந்தது 3 நாட்களுக்கு முன்னர் மட்டுமே தேதி மாற்றலாம்.',
+    tooCloseToChangeMuhurtham: 'முஹூர்த்தம் தேதிகளுக்கு நிகழ்விற்கு குறைந்தது 10 நாட்களுக்கு முன்னர் மட்டுமே தேதி மாற்றலாம்.',
+    rescheduleTitle: 'பதிவு தேதியை மாற்றவும்',
+    rescheduleLabel: 'புதிய தேதியை தேர்வு செய்யவும்',
+    rescheduleConfirm: 'மாற்றத்தை உறுதிப்படுத்துங்கள்',
+    rescheduling: 'புதுப்பிக்கிறது…',
+    rescheduleBack: 'திரும்பு',
+    rescheduleSuccess: (date) => `பதிவு ${date} க்கு மாற்றப்பட்டது.`,
+    rescheduleError: 'மாற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
   },
 };
 
 const ADMIN_WA = '919443380023';
+
+function daysUntilEvent(isoDate) {
+  if (!isoDate) return 0;
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const event = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.floor((event - today) / (1000 * 60 * 60 * 24));
+}
 
 function fmtDate(iso) {
   if (!iso) return iso;
@@ -102,10 +132,19 @@ function statusCls(status) {
 
 function buildWaUrl(b, lang) {
   const fl = FUNCTION_LABELS[lang] || FUNCTION_LABELS.en;
+  const func = fl[b.functionType] || b.functionType;
+  if (b.status === 'CANCELLED') {
+    const text =
+      `Hi, I have cancelled my booking at 4S Malini Mahal.\n` +
+      `Reference: ${b.reference}\nName: ${b.customerName}\n` +
+      `Date: ${fmtDate(b.eventDate)}\nFunction: ${func}\n` +
+      `Please acknowledge my cancellation. Thank you.`;
+    return `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(text)}`;
+  }
   const text =
     `Hi, I have booked 4S Malini Mahal.\n` +
     `Reference: ${b.reference}\nName: ${b.customerName}\n` +
-    `Date: ${fmtDate(b.eventDate)}\nFunction: ${fl[b.functionType] || b.functionType}\n` +
+    `Date: ${fmtDate(b.eventDate)}\nFunction: ${func}\n` +
     `Kindly confirm my booking. Thank you.`;
   return `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(text)}`;
 }
@@ -118,6 +157,10 @@ export default class MyBookings extends Component {
   @tracked cancellingRef = null;
   @tracked cancelling    = false;
   @tracked cancelMsg     = null;  // { type: 'success'|'error', text: '...' }
+  @tracked rescheduleRef  = null;
+  @tracked rescheduleDate = '';
+  @tracked rescheduling   = false;
+  @tracked rescheduleMsg  = null;
 
   constructor(owner, args) {
     super(owner, args);
@@ -141,6 +184,12 @@ export default class MyBookings extends Component {
   get isLoading()          { return this.bookings === null && !this.loadError; }
   get isEmpty()            { return Array.isArray(this.bookings) && this.bookings.length === 0; }
   get cancelMsgIsSuccess() { return this.cancelMsg?.type === 'success'; }
+  get rescheduleMsgIsSuccess() { return this.rescheduleMsg?.type === 'success'; }
+  get minRescheduleDate() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  }
 
   get rows() {
     if (!Array.isArray(this.bookings)) return [];
@@ -149,24 +198,34 @@ export default class MyBookings extends Component {
     const fl = FUNCTION_LABELS[lang] || FUNCTION_LABELS.en;
     const rl = RENTAL_LABELS[lang]   || RENTAL_LABELS.en;
     const sl = STATUS_LABELS[lang]   || STATUS_LABELS.en;
-    return this.bookings.map(b => ({
-      reference:    b.reference,
-      customerName: b.customerName,
-      functionType: b.functionType,
-      rentalType:   b.rentalType,
-      eventDate:    b.eventDate,
-      status:       b.status,
-      formattedDate: fmtDate(b.eventDate),
-      funcLabel:    fl[b.functionType]  || b.functionType,
-      rentalLabel:  rl[b.rentalType]    || b.rentalType,
-      statusLabel:  sl[b.status]        || b.status,
-      statusCls:    statusCls(b.status),
-      waHref:       buildWaUrl(b, lang),
-      canPay:       b.status === 'AWAITING_PAYMENT',
-      canInvoice:   b.status === 'CONFIRMED' || b.status === 'COMPLETED',
-      canCancel:    b.status === 'AWAITING_PAYMENT' || b.status === 'CONFIRMED',
-      isConfirming: b.reference === cancellingRef,
-    }));
+    const t  = T[lang]               || T.en;
+    return this.bookings.map(b => {
+      const minDays = b.isMuhurtham ? 10 : 3;
+      const days    = daysUntilEvent(b.eventDate);
+      return {
+        reference:    b.reference,
+        customerName: b.customerName,
+        functionType: b.functionType,
+        rentalType:   b.rentalType,
+        eventDate:    b.eventDate,
+        isMuhurtham:  b.isMuhurtham,
+        status:       b.status,
+        formattedDate: fmtDate(b.eventDate),
+        funcLabel:    fl[b.functionType]  || b.functionType,
+        rentalLabel:  rl[b.rentalType]    || b.rentalType,
+        statusLabel:  sl[b.status]        || b.status,
+        statusCls:    statusCls(b.status),
+        waHref:       buildWaUrl(b, lang),
+        canPay:       b.status === 'AWAITING_PAYMENT',
+        canInvoice:   b.status === 'CONFIRMED' || b.status === 'COMPLETED',
+        canCancel:    b.status === 'AWAITING_PAYMENT' || b.status === 'CONFIRMED',
+        isConfirming: b.reference === cancellingRef,
+        canReschedule: b.status === 'CONFIRMED' && days >= minDays,
+        tooCloseToChange: b.status === 'CONFIRMED' && days >= 0 && days < minDays,
+        tooCloseMsg:  b.isMuhurtham ? t.tooCloseToChangeMuhurtham : t.tooCloseToChange,
+        isRescheduling: b.reference === this.rescheduleRef,
+      };
+    });
   }
 
   @action startCancel(ref) {
@@ -211,6 +270,48 @@ export default class MyBookings extends Component {
     }
   }
 
+  @action startReschedule(ref) {
+    this.rescheduleRef  = ref;
+    this.rescheduleDate = '';
+    this.rescheduleMsg  = null;
+    this.cancellingRef  = null;
+  }
+
+  @action dismissReschedule() {
+    this.rescheduleRef = null;
+  }
+
+  @action setRescheduleDate(iso) {
+    this.rescheduleDate = iso;
+  }
+
+  @action async confirmReschedule(ref) {
+    if (!this.rescheduleDate || this.rescheduling) return;
+    this.rescheduling = true;
+    try {
+      const res = await fetch(apiUrl(`/api/enquiries/${ref}/reschedule`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newEventDate: this.rescheduleDate }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        this.rescheduleMsg = { type: 'success', text: this.t.rescheduleSuccess(fmtDate(this.rescheduleDate)) };
+        this.rescheduleRef = null;
+        this.bookings = null;
+        await this.load();
+      } else {
+        this.rescheduleMsg = { type: 'error', text: data.error || this.t.rescheduleError };
+        this.rescheduleRef = null;
+      }
+    } catch (_) {
+      this.rescheduleMsg = { type: 'error', text: this.t.rescheduleError };
+      this.rescheduleRef = null;
+    } finally {
+      this.rescheduling = false;
+    }
+  }
+
   <template>
     <div class="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
 
@@ -225,6 +326,12 @@ export default class MyBookings extends Component {
       {{#if this.cancelMsg}}
         <div class="mx-4 mt-4 rounded-lg px-4 py-3 text-sm font-medium {{if this.cancelMsgIsSuccess 'bg-green-50 border border-green-200 text-green-800' 'bg-red-50 border border-red-200 text-red-700'}}">
           {{this.cancelMsg.text}}
+        </div>
+      {{/if}}
+
+      {{#if this.rescheduleMsg}}
+        <div class="mx-4 mt-4 rounded-lg px-4 py-3 text-sm font-medium {{if this.rescheduleMsgIsSuccess 'bg-green-50 border border-green-200 text-green-800' 'bg-red-50 border border-red-200 text-red-700'}}">
+          {{this.rescheduleMsg.text}}
         </div>
       {{/if}}
 
@@ -302,6 +409,26 @@ export default class MyBookings extends Component {
                     {{this.t.notify}}
                   </a>
 
+                  {{#if b.canReschedule}}
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                      {{on "click" (fn this.startReschedule b.reference)}}
+                    >
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/>
+                      </svg>
+                      {{this.t.changeDate}}
+                    </button>
+                  {{else if b.tooCloseToChange}}
+                    <span class="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-700 cursor-not-allowed" title={{b.tooCloseMsg}}>
+                      <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                      </svg>
+                      {{this.t.changeDate}}
+                    </span>
+                  {{/if}}
+
                   {{#if b.canCancel}}
                     <button
                       type="button"
@@ -342,6 +469,51 @@ export default class MyBookings extends Component {
                       {{on "click" this.dismissCancel}}
                     >
                       {{this.t.cancelConfirmNo}}
+                    </button>
+                  </div>
+                </div>
+              {{/if}}
+
+              {{#if b.tooCloseToChange}}
+                <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
+                  <svg class="inline h-3.5 w-3.5 mr-1 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                  </svg>
+                  {{b.tooCloseMsg}}
+                </div>
+              {{/if}}
+
+              {{#if b.isRescheduling}}
+                <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                  <p class="text-sm font-semibold text-blue-800">{{this.t.rescheduleTitle}}</p>
+                  <div class="mt-3">
+                    <label class="text-xs font-medium text-blue-700 mb-1.5 block">{{this.t.rescheduleLabel}}</label>
+                    <DatePickerCalendar
+                      @value={{this.rescheduleDate}}
+                      @min={{this.minRescheduleDate}}
+                      @onChange={{this.setRescheduleDate}}
+                    />
+                  </div>
+                  <div class="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={{this.rescheduling}}
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-800 transition-colors disabled:opacity-60"
+                      {{on "click" (fn this.confirmReschedule b.reference)}}
+                    >
+                      {{#if this.rescheduling}}
+                        {{this.t.rescheduling}}
+                      {{else}}
+                        {{this.t.rescheduleConfirm}}
+                      {{/if}}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={{this.rescheduling}}
+                      class="inline-flex items-center rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-60"
+                      {{on "click" this.dismissReschedule}}
+                    >
+                      {{this.t.rescheduleBack}}
                     </button>
                   </div>
                 </div>

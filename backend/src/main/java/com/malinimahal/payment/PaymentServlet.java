@@ -2,6 +2,7 @@ package com.malinimahal.payment;
 
 import com.malinimahal.enquiry.Enquiry;
 import com.malinimahal.enquiry.EnquiryDao;
+import com.malinimahal.notification.OwnerNotifier;
 import com.malinimahal.terms.TermsAcceptanceDao;
 import com.malinimahal.terms.TermsVersionDao;
 import com.malinimahal.web.JsonSupport;
@@ -273,6 +274,14 @@ public class PaymentServlet extends HttpServlet {
             getServletContext().log("Failed to update booking status after payment", e);
             JsonSupport.error(resp, 500, "Payment recorded but booking status update failed");
             return;
+        }
+
+        // Notify owner now that payment is confirmed
+        try {
+            Enquiry confirmed = enquiryDao.findByReference(reference);
+            if (confirmed != null) OwnerNotifier.notifyAsync(confirmed);
+        } catch (Exception e) {
+            getServletContext().log("Owner notification failed after payment (non-fatal)", e);
         }
 
         JsonSupport.write(resp, 200,

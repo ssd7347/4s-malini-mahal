@@ -213,6 +213,26 @@ export default class HomePage extends Component {
       else if (e.key === 'Escape') this.closeLightbox();
     };
     this.loadGallery();
+    requestAnimationFrame(() => this._setupReveal());
+  }
+
+  _setupReveal() {
+    if (typeof IntersectionObserver === 'undefined') return;
+    this._revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('revealed');
+          this._revealObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => this._revealObserver.observe(el));
+  }
+
+  willDestroy() {
+    super.willDestroy();
+    document.removeEventListener('keydown', this._handleKey);
+    if (this._revealObserver) this._revealObserver.disconnect();
   }
 
   get lightboxCount() { return Math.min(this._galleryItems.length, 6); }
@@ -261,33 +281,40 @@ export default class HomePage extends Component {
     <div class="animate-slide-up">
 
       {{! ── HERO ── }}
-      <div class="relative rounded-2xl overflow-hidden mb-8" style="min-height: 360px;">
+      <div class="relative rounded-2xl overflow-hidden mb-8" style="min-height: 500px;">
         {{#if this.heroImage}}
           <img src={{this.heroImage}} alt="4S Malini Mahal" class="absolute inset-0 w-full h-full object-cover" />
-          <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/75"></div>
         {{else}}
           <div class="absolute inset-0 bg-gradient-to-br from-rose-900 via-rose-800 to-stone-900"></div>
         {{/if}}
+        {{! Subtle vignette corners }}
+        <div class="absolute inset-0 bg-radial-gradient pointer-events-none" style="background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.45) 100%)"></div>
 
-        <div class="relative flex flex-col items-center justify-center text-center px-6 py-20 sm:py-28">
-          <div class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-white/90 mb-4">
+        <div class="relative flex flex-col items-center justify-center text-center px-6 py-28 sm:py-36">
+          <div class="hero-a1 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-white/90 mb-5">
             <span class="h-2 w-2 rounded-full bg-rose-400 shrink-0"></span>
             {{this.t.badge}}
           </div>
-          <h1 class="text-4xl sm:text-6xl font-bold text-white leading-tight tracking-tight drop-shadow-lg">
+          <h1 class="hero-a2 text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight drop-shadow-xl">
             {{this.t.heroTitle}}
           </h1>
-          <p class="mt-3 text-white/80 text-base sm:text-lg font-medium drop-shadow">
+          <div class="hero-a3 flex items-center gap-3 my-5">
+            <span class="block h-px w-12 bg-white/40"></span>
+            <span class="block h-1.5 w-1.5 rounded-full bg-white/70"></span>
+            <span class="block h-px w-12 bg-white/40"></span>
+          </div>
+          <p class="hero-a4 text-white/85 text-base sm:text-xl font-medium drop-shadow max-w-lg">
             {{this.t.heroSub}}
           </p>
-          <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div class="hero-a5 mt-9 flex flex-wrap items-center justify-center gap-3">
             <LinkTo @route="booking"
-              class="inline-flex items-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-700 px-7 py-3 text-sm font-bold text-white shadow-lg transition-colors active:scale-[0.97]">
+              class="inline-flex items-center gap-2 rounded-xl bg-rose-700 hover:bg-rose-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-rose-900/40 transition-all hover:shadow-rose-700/50 hover:-translate-y-0.5 active:scale-[0.97]">
               {{this.t.bookNow}}
               <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
             </LinkTo>
             <LinkTo @route="availability"
-              class="inline-flex items-center gap-2 rounded-xl border border-white/40 bg-white/10 backdrop-blur-sm hover:bg-white/20 px-6 py-3 text-sm font-semibold text-white transition-colors">
+              class="inline-flex items-center gap-2 rounded-xl border border-white/40 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:-translate-y-0.5 px-7 py-3.5 text-sm font-semibold text-white transition-all">
               {{this.t.checkAvail}}
             </LinkTo>
           </div>
@@ -295,22 +322,27 @@ export default class HomePage extends Component {
       </div>
 
       {{! ── STATS BANNER ── }}
-      <section class="mb-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-5 text-center shadow-sm">
-          <p class="text-3xl sm:text-4xl font-extrabold text-rose-700">{{this.t.stat1n}}</p>
-          <p class="mt-1 text-xs font-semibold text-rose-500 uppercase tracking-wide">{{this.t.stat1l}}</p>
-        </div>
-        <div class="rounded-2xl bg-amber-50 border border-amber-100 p-5 text-center shadow-sm">
-          <p class="text-3xl sm:text-4xl font-extrabold text-amber-700">{{this.t.stat2n}}</p>
-          <p class="mt-1 text-xs font-semibold text-amber-500 uppercase tracking-wide">{{this.t.stat2l}}</p>
-        </div>
-        <div class="rounded-2xl bg-green-50 border border-green-100 p-5 text-center shadow-sm">
-          <p class="text-3xl sm:text-4xl font-extrabold text-green-700">{{this.t.stat3n}}</p>
-          <p class="mt-1 text-xs font-semibold text-green-500 uppercase tracking-wide">{{this.t.stat3l}}</p>
-        </div>
-        <div class="rounded-2xl bg-purple-50 border border-purple-100 p-5 text-center shadow-sm">
-          <p class="text-3xl sm:text-4xl font-extrabold text-purple-700">{{this.t.stat4n}}</p>
-          <p class="mt-1 text-xs font-semibold text-purple-500 uppercase tracking-wide">{{this.t.stat4l}}</p>
+      <section class="mb-12 reveal">
+        <div class="rounded-2xl bg-white border border-stone-200 shadow-sm overflow-hidden">
+          <div class="h-1 bg-rose-700"></div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-stone-100 py-6 px-4">
+            <div class="py-3 sm:py-0 text-center px-4">
+              <p class="text-3xl sm:text-4xl font-extrabold text-rose-700 leading-none">{{this.t.stat1n}}</p>
+              <p class="mt-2 text-xs font-semibold text-stone-400 uppercase tracking-widest">{{this.t.stat1l}}</p>
+            </div>
+            <div class="py-3 sm:py-0 text-center px-4">
+              <p class="text-3xl sm:text-4xl font-extrabold text-rose-700 leading-none">{{this.t.stat2n}}</p>
+              <p class="mt-2 text-xs font-semibold text-stone-400 uppercase tracking-widest">{{this.t.stat2l}}</p>
+            </div>
+            <div class="py-3 sm:py-0 text-center px-4">
+              <p class="text-3xl sm:text-4xl font-extrabold text-rose-700 leading-none">{{this.t.stat3n}}</p>
+              <p class="mt-2 text-xs font-semibold text-stone-400 uppercase tracking-widest">{{this.t.stat3l}}</p>
+            </div>
+            <div class="py-3 sm:py-0 text-center px-4">
+              <p class="text-3xl sm:text-4xl font-extrabold text-rose-700 leading-none">{{this.t.stat4n}}</p>
+              <p class="mt-2 text-xs font-semibold text-stone-400 uppercase tracking-widest">{{this.t.stat4l}}</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -322,7 +354,7 @@ export default class HomePage extends Component {
       {{/if}}
 
       {{! ── WELCOME ── }}
-      <section class="mb-12 grid md:grid-cols-2 gap-8 items-center">
+      <section class="mb-12 grid md:grid-cols-2 gap-8 items-center reveal">
         <div>
           <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">About Us</p>
           <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 leading-snug mb-4">{{this.t.welcomeTitle}}</h2>
@@ -472,13 +504,14 @@ export default class HomePage extends Component {
 
       {{! ── EVENTS WE HOST ── }}
       <section class="mb-12">
-        <div class="text-center mb-6">
-          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Occasions</p>
+        <div class="text-center mb-8 reveal">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">Occasions</p>
           <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.eventsTitle}}</h2>
+          <span class="gold-rule"></span>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
-          <div class="rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal card-lift rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-3">
               <svg class="h-6 w-6 text-rose-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
@@ -487,7 +520,7 @@ export default class HomePage extends Component {
             <p class="font-semibold text-stone-800">{{this.t.ev1}}</p>
           </div>
 
-          <div class="rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal reveal-d1 card-lift rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-3">
               <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
@@ -496,7 +529,7 @@ export default class HomePage extends Component {
             <p class="font-semibold text-stone-800">{{this.t.ev2}}</p>
           </div>
 
-          <div class="rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal reveal-d2 card-lift rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-full bg-pink-50 flex items-center justify-center mx-auto mb-3">
               <svg class="h-6 w-6 text-pink-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
@@ -505,7 +538,7 @@ export default class HomePage extends Component {
             <p class="font-semibold text-stone-800">{{this.t.ev3}}</p>
           </div>
 
-          <div class="rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal reveal-d1 card-lift rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-full bg-yellow-50 flex items-center justify-center mx-auto mb-3">
               <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
@@ -514,7 +547,7 @@ export default class HomePage extends Component {
             <p class="font-semibold text-stone-800">{{this.t.ev4}}</p>
           </div>
 
-          <div class="rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal reveal-d2 card-lift rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
               <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/>
@@ -523,7 +556,7 @@ export default class HomePage extends Component {
             <p class="font-semibold text-stone-800">{{this.t.ev5}}</p>
           </div>
 
-          <div class="rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal reveal-d3 card-lift rounded-xl border border-stone-200 bg-white p-5 text-center shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-3">
               <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
@@ -537,28 +570,30 @@ export default class HomePage extends Component {
 
       {{! ── CAPACITY & SPACE ── }}
       <section class="mb-12">
-        <div class="text-center mb-6">
-          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Space</p>
+        <div class="text-center mb-8 reveal">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">Space</p>
           <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.capTitle}}</h2>
-          <p class="mt-1 text-sm text-stone-400">{{this.t.capSub}}</p>
+          <span class="gold-rule"></span>
+          <p class="mt-4 text-sm text-stone-400">{{this.t.capSub}}</p>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div class="rounded-2xl border-2 border-rose-200 bg-rose-50 p-6 text-center shadow-sm">
-            <p class="text-4xl font-extrabold text-rose-700 mb-1">{{this.t.cap1n}}</p>
-            <p class="font-semibold text-stone-800 text-sm">{{this.t.cap1l}}</p>
+          <div class="reveal card-lift rounded-2xl bg-white border-2 border-rose-200 p-6 text-center shadow-sm overflow-hidden relative">
+            <div class="absolute top-0 inset-x-0 h-1 bg-rose-700"></div>
+            <p class="text-4xl font-extrabold text-rose-700 mb-1 leading-none">{{this.t.cap1n}}</p>
+            <p class="font-semibold text-stone-800 text-sm mt-2">{{this.t.cap1l}}</p>
             <p class="text-xs text-stone-400 mt-1">{{this.t.cap1d}}</p>
           </div>
-          <div class="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
+          <div class="reveal reveal-d1 card-lift rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
             <p class="text-4xl font-extrabold text-stone-700 mb-1">{{this.t.cap2n}}</p>
             <p class="font-semibold text-stone-700 text-sm">{{this.t.cap2l}}</p>
             <p class="text-xs text-stone-400 mt-1">{{this.t.cap2d}}</p>
           </div>
-          <div class="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
+          <div class="reveal reveal-d2 card-lift rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
             <p class="text-4xl font-extrabold text-stone-700 mb-1">{{this.t.cap3n}}</p>
             <p class="font-semibold text-stone-700 text-sm">{{this.t.cap3l}}</p>
             <p class="text-xs text-stone-400 mt-1">{{this.t.cap3d}}</p>
           </div>
-          <div class="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
+          <div class="reveal reveal-d3 card-lift rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
             <p class="text-4xl font-extrabold text-stone-700 mb-1">{{this.t.cap4n}}</p>
             <p class="font-semibold text-stone-700 text-sm">{{this.t.cap4l}}</p>
             <p class="text-xs text-stone-400 mt-1">{{this.t.cap4d}}</p>
@@ -568,13 +603,14 @@ export default class HomePage extends Component {
 
       {{! ── AMENITIES ── }}
       <section class="mb-12">
-        <div class="text-center mb-6">
-          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Facilities</p>
+        <div class="text-center mb-8 reveal">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">Facilities</p>
           <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.amenitiesTitle}}</h2>
+          <span class="gold-rule"></span>
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal card-lift flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
               <svg class="h-6 w-6 text-rose-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
@@ -583,7 +619,7 @@ export default class HomePage extends Component {
             <div><p class="font-semibold text-stone-800">{{this.t.am1}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am1d}}</p></div>
           </div>
 
-          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal card-lift flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-xl bg-pink-100 flex items-center justify-center shrink-0">
               <svg class="h-6 w-6 text-pink-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
@@ -592,7 +628,7 @@ export default class HomePage extends Component {
             <div><p class="font-semibold text-stone-800">{{this.t.am2}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am2d}}</p></div>
           </div>
 
-          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal card-lift flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
               <svg class="h-6 w-6 text-amber-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5"/>
@@ -601,7 +637,7 @@ export default class HomePage extends Component {
             <div><p class="font-semibold text-stone-800">{{this.t.am3}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am3d}}</p></div>
           </div>
 
-          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal card-lift flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
               <svg class="h-6 w-6 text-purple-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
@@ -610,7 +646,7 @@ export default class HomePage extends Component {
             <div><p class="font-semibold text-stone-800">{{this.t.am4}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am4d}}</p></div>
           </div>
 
-          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal card-lift flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
               <svg class="h-6 w-6 text-orange-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/>
@@ -619,7 +655,7 @@ export default class HomePage extends Component {
             <div><p class="font-semibold text-stone-800">{{this.t.am5}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am5d}}</p></div>
           </div>
 
-          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+          <div class="reveal card-lift flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
               <svg class="h-6 w-6 text-blue-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
@@ -633,36 +669,38 @@ export default class HomePage extends Component {
 
       {{! ── PRICING ── }}
       <section class="mb-12">
-        <div class="text-center mb-6">
-          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Pricing</p>
+        <div class="text-center mb-8 reveal">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">Pricing</p>
           <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.pricingTitle}}</h2>
-          <p class="mt-1 text-sm text-stone-400">{{this.t.pricingNote}}</p>
+          <span class="gold-rule"></span>
+          <p class="mt-4 text-sm text-stone-400">{{this.t.pricingNote}}</p>
         </div>
-        <div class="grid sm:grid-cols-3 gap-4">
+        <div class="grid sm:grid-cols-3 gap-5 items-stretch">
 
-          <div class="rounded-2xl border-2 border-rose-200 bg-rose-50 p-6 text-center shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-widest text-rose-500 mb-2">{{this.t.p1label}}</p>
-            <p class="text-4xl font-extrabold text-rose-700 mb-1">{{this.t.p1price}}</p>
-            <p class="text-xs text-rose-500">{{this.t.p1note}}</p>
-            <LinkTo @route="booking" class="mt-4 block rounded-lg bg-rose-700 py-2 text-sm font-bold text-white hover:bg-rose-800 transition-colors">
+          {{! Full Day — featured card }}
+          <div class="reveal card-lift rounded-2xl bg-white border-2 border-rose-200 p-7 text-center shadow-sm">
+            <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-3">{{this.t.p1label}}</p>
+            <p class="text-5xl font-extrabold text-stone-900 mb-1">{{this.t.p1price}}</p>
+            <p class="text-xs text-stone-400 mb-5">{{this.t.p1note}}</p>
+            <LinkTo @route="booking" class="block rounded-xl bg-rose-700 hover:bg-rose-600 py-2.5 text-sm font-bold text-white transition-all hover:-translate-y-0.5">
               {{this.t.bookNow}}
             </LinkTo>
           </div>
 
-          <div class="rounded-2xl border-2 border-stone-200 bg-white p-6 text-center shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-widest text-stone-500 mb-2">{{this.t.p2label}}</p>
-            <p class="text-4xl font-extrabold text-stone-800 mb-1">{{this.t.p2price}}</p>
-            <p class="text-xs text-stone-400">{{this.t.p2note}}</p>
-            <LinkTo @route="booking" class="mt-4 block rounded-lg border border-stone-200 py-2 text-sm font-bold text-stone-700 hover:bg-stone-50 transition-colors">
+          <div class="reveal reveal-d1 card-lift rounded-2xl border-2 border-stone-200 bg-white p-7 text-center shadow-sm">
+            <p class="text-xs font-bold uppercase tracking-widest text-stone-500 mb-3">{{this.t.p2label}}</p>
+            <p class="text-5xl font-extrabold text-stone-800 mb-1">{{this.t.p2price}}</p>
+            <p class="text-xs text-stone-400 mb-5">{{this.t.p2note}}</p>
+            <LinkTo @route="booking" class="block rounded-xl border border-stone-200 py-2.5 text-sm font-bold text-stone-700 hover:bg-stone-50 hover:border-stone-300 transition-all hover:-translate-y-0.5">
               {{this.t.bookNow}}
             </LinkTo>
           </div>
 
-          <div class="rounded-2xl border-2 border-stone-200 bg-white p-6 text-center shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-widest text-stone-500 mb-2">{{this.t.p3label}}</p>
-            <p class="text-4xl font-extrabold text-stone-800 mb-1">{{this.t.p3price}}</p>
-            <p class="text-xs text-stone-400">{{this.t.p3note}}</p>
-            <LinkTo @route="booking" class="mt-4 block rounded-lg border border-stone-200 py-2 text-sm font-bold text-stone-700 hover:bg-stone-50 transition-colors">
+          <div class="reveal reveal-d2 card-lift rounded-2xl border-2 border-stone-200 bg-white p-7 text-center shadow-sm">
+            <p class="text-xs font-bold uppercase tracking-widest text-stone-500 mb-3">{{this.t.p3label}}</p>
+            <p class="text-5xl font-extrabold text-stone-800 mb-1">{{this.t.p3price}}</p>
+            <p class="text-xs text-stone-400 mb-5">{{this.t.p3note}}</p>
+            <LinkTo @route="booking" class="block rounded-xl border border-stone-200 py-2.5 text-sm font-bold text-stone-700 hover:bg-stone-50 hover:border-stone-300 transition-all hover:-translate-y-0.5">
               {{this.t.bookNow}}
             </LinkTo>
           </div>
@@ -672,23 +710,25 @@ export default class HomePage extends Component {
 
       {{! ── TESTIMONIALS ── }}
       <section class="mb-12">
-        <div class="text-center mb-6">
-          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Reviews</p>
+        <div class="text-center mb-8 reveal">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">Reviews</p>
           <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.testimonialsTitle}}</h2>
+          <span class="gold-rule"></span>
         </div>
-        <div class="grid sm:grid-cols-3 gap-4">
+        <div class="grid sm:grid-cols-3 gap-5">
 
-          <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm flex flex-col">
+          <div class="reveal card-lift rounded-2xl bg-white border border-stone-200 p-6 shadow-sm flex flex-col">
+            <div class="text-rose-200 text-5xl font-serif leading-none mb-2 select-none">"</div>
             <div class="flex gap-0.5 mb-3">
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
             <p class="text-stone-600 text-sm leading-relaxed mb-4 grow">{{this.t.t1q}}</p>
             <div class="flex items-center gap-3 mt-auto pt-3 border-t border-stone-100">
-              <div class="h-9 w-9 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+              <div class="h-9 w-9 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
                 <span class="text-xs font-bold text-rose-700">{{this.t.t1i}}</span>
               </div>
               <div>
@@ -698,18 +738,19 @@ export default class HomePage extends Component {
             </div>
           </div>
 
-          <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm flex flex-col">
+          <div class="reveal reveal-d1 card-lift rounded-2xl bg-white border border-stone-200 p-6 shadow-sm flex flex-col">
+            <div class="text-rose-200 text-5xl font-serif leading-none mb-2 select-none">"</div>
             <div class="flex gap-0.5 mb-3">
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
             <p class="text-stone-600 text-sm leading-relaxed mb-4 grow">{{this.t.t2q}}</p>
             <div class="flex items-center gap-3 mt-auto pt-3 border-t border-stone-100">
-              <div class="h-9 w-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                <span class="text-xs font-bold text-amber-700">{{this.t.t2i}}</span>
+              <div class="h-9 w-9 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
+                <span class="text-xs font-bold text-rose-700">{{this.t.t2i}}</span>
               </div>
               <div>
                 <p class="font-semibold text-stone-800 text-sm">{{this.t.t2n}}</p>
@@ -718,18 +759,19 @@ export default class HomePage extends Component {
             </div>
           </div>
 
-          <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm flex flex-col">
+          <div class="reveal reveal-d2 card-lift rounded-2xl bg-white border border-stone-200 p-6 shadow-sm flex flex-col">
+            <div class="text-rose-200 text-5xl font-serif leading-none mb-2 select-none">"</div>
             <div class="flex gap-0.5 mb-3">
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
             <p class="text-stone-600 text-sm leading-relaxed mb-4 grow">{{this.t.t3q}}</p>
             <div class="flex items-center gap-3 mt-auto pt-3 border-t border-stone-100">
-              <div class="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <span class="text-xs font-bold text-green-700">{{this.t.t3i}}</span>
+              <div class="h-9 w-9 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
+                <span class="text-xs font-bold text-rose-700">{{this.t.t3i}}</span>
               </div>
               <div>
                 <p class="font-semibold text-stone-800 text-sm">{{this.t.t3n}}</p>
@@ -766,9 +808,10 @@ export default class HomePage extends Component {
 
       {{! ── LOCATION ── }}
       <section class="mb-12">
-        <div class="text-center mb-6">
-          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">{{this.t.locationLabel}}</p>
+        <div class="text-center mb-8 reveal">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">{{this.t.locationLabel}}</p>
           <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.locationTitle}}</h2>
+          <span class="gold-rule"></span>
         </div>
         <div class="rounded-2xl border border-stone-200 bg-white shadow-sm overflow-hidden">
           <div class="grid md:grid-cols-2">

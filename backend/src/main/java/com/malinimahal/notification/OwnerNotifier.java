@@ -4,6 +4,7 @@ import com.malinimahal.auth.SmsSender;
 import com.malinimahal.auth.WhatsAppSender;
 import com.malinimahal.enquiry.Enquiry;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
@@ -26,13 +27,26 @@ public class OwnerNotifier {
 
     private static final NotificationDao dao = new NotificationDao();
 
-    /** Called immediately after a booking is persisted. Non-blocking — returns instantly. */
+    /** Called after successful advance payment. */
     public static void notifyAsync(Enquiry saved) {
+        sendAsync(new NotificationPayload(saved), saved.getReference());
+    }
+
+    /** Called after the customer reschedules a confirmed booking. */
+    public static void notifyRescheduleAsync(Enquiry rescheduled, LocalDate oldDate) {
+        sendAsync(NotificationPayload.forReschedule(rescheduled, oldDate), rescheduled.getReference());
+    }
+
+    /** Called after the customer cancels a booking. */
+    public static void notifyCancellationAsync(Enquiry cancelled) {
+        sendAsync(NotificationPayload.forCancellation(cancelled), cancelled.getReference());
+    }
+
+    private static void sendAsync(NotificationPayload payload, String enquiryRef) {
         CompletableFuture.runAsync(() -> {
-            NotificationPayload payload = new NotificationPayload(saved);
-            sendChannel("whatsapp", saved.getReference(), payload);
-            sendChannel("sms",      saved.getReference(), payload);
-            sendChannel("email",    saved.getReference(), payload);
+            sendChannel("whatsapp", enquiryRef, payload);
+            sendChannel("sms",      enquiryRef, payload);
+            sendChannel("email",    enquiryRef, payload);
         }).exceptionally(ex -> {
             LOG.warning("OwnerNotifier async task error: " + ex.getMessage());
             return null;

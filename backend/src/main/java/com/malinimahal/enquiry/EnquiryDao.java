@@ -264,6 +264,26 @@ public class EnquiryDao {
         }
     }
 
+    public boolean reschedule(String reference, LocalDate newEventDate, LocalDate newEndDate,
+                               OffsetDateTime newStart, OffsetDateTime newEnd,
+                               boolean newIsMuhurtham) throws SQLException {
+        final String sql = """
+                UPDATE enquiries
+                   SET event_date = ?, end_date = ?, start_datetime = ?, end_datetime = ?, is_muhurtham = ?
+                 WHERE reference = ?
+                """;
+        try (Connection conn = Database.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setObject(1, newEventDate);
+            ps.setObject(2, newEndDate);
+            ps.setObject(3, newStart);
+            ps.setObject(4, newEnd);
+            ps.setBoolean(5, newIsMuhurtham);
+            ps.setString(6, reference);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     private static String newReference() {
         StringBuilder sb = new StringBuilder("MM-");
         for (int i = 0; i < 6; i++) sb.append(CODE_ALPHABET[RANDOM.nextInt(CODE_ALPHABET.length)]);

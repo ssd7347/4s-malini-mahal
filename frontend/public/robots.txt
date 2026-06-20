@@ -1,3 +1,9 @@
 # https://www.robotstxt.org/
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /payment/
+Disallow: /invoice/
+Disallow: /receipt/
+Disallow: /login
+
+Sitemap: https://4smalinimahal.in/sitemap.xml

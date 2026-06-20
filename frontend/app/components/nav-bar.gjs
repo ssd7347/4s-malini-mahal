@@ -11,7 +11,7 @@ const MOBILE_LINK = 'block w-full rounded-lg px-4 py-2.5 text-sm font-medium tex
 const T = {
   en: {
     home: 'Home', gallery: 'Gallery', amenities: 'Amenities', bookNow: 'Book Now',
-    availability: 'Availability', contact: 'Contact',
+    availability: 'Check Availability', contact: 'Contact',
     admin: 'Admin', logIn: 'Log in', logOut: 'Log out',
   },
   ta: {

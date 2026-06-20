@@ -41,7 +41,9 @@ const T = {
     muhurthamBadge:     'Muhurtham Day — auspicious date',
     muhurthamTitle:     'Cancellation policy for muhurtham dates',
     muhurthamPolicy:    '0% refund if cancelled after booking. Non-muhurtham dates receive a full advance refund on cancellation.',
-    muhurthamNoHourly:  'Hourly rental is not available on muhurtham dates',
+    muhurthamNoHourly:    'Hourly rental is not available on muhurtham dates',
+    muhurthamHourlyException: 'Hourly rental is now available — this muhurtham date is within 7 days and not yet booked.',
+    muhurthamRentalNote: 'On this date, only Full Day and Half Day rentals are available. Hourly rental is not permitted on muhurtham dates — unless the date is within 7 days and the hall is still available.',
     checkingAvail:      'Checking availability…',
     available:          'Available',
     pendingEnquiry:     'Another enquiry is pending — you may still submit yours',
@@ -119,7 +121,9 @@ const T = {
     muhurthamBadge:     'முஹூர்த்தம் நாள் — மங்களகரமான தேதி',
     muhurthamTitle:     'முஹூர்த்தம் தேதிகளுக்கான ரத்துக் கொள்கை',
     muhurthamPolicy:    'பதிவு செய்த பிறகு ரத்துசெய்தால் 0% திரும்பக்கொடுப்பு. முஹூர்த்தம் அல்லாத தேதிகளில் ரத்துசெய்தால் முழு முன்பண திரும்பக்கொடுப்பு.',
-    muhurthamNoHourly:  'முஹூர்த்தம் நாட்களில் மணிநேர வாடகை கிடைக்காது',
+    muhurthamNoHourly:    'முஹூர்த்தம் நாட்களில் மணிநேர வாடகை கிடைக்காது',
+    muhurthamHourlyException: 'மணிநேர வாடகை இப்போது கிடைக்கிறது — இந்த முஹூர்த்தம் தேதி 7 நாட்களுக்குள் உள்ளது மற்றும் இன்னும் காலியாக உள்ளது.',
+    muhurthamRentalNote: 'இந்த தேதியில் முழு நாள் மற்றும் அரை நாள் வாடகைகள் மட்டுமே கிடைக்கும். முஹூர்த்தம் நாட்களில் மணிநேர வாடகை அனுமதிக்கப்படவில்லை — 7 நாட்களுக்குள் கிடைக்காமல் இருந்தால் மட்டும் மணிநேர வாடகை அனுமதிக்கப்படும்.',
     checkingAvail:      'கிடைக்கும் தன்மையை சரிபார்க்கிறது…',
     available:          'கிடைக்கிறது',
     pendingEnquiry:     'மற்றொரு விசாரணை நிலுவையில் உள்ளது — நீங்கள் இன்னும் சமர்ப்பிக்கலாம்',
@@ -254,6 +258,18 @@ export default class EnquiryForm extends Component {
   }
 
   get t()                    { return T[this.language.lang]; }
+
+  get muhurthamAllowsHourly() {
+    if (!this.isMuhurtham || !this.selectedDate) return false;
+    const [y, m, d] = this.selectedDate.split('-').map(Number);
+    const event = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.floor((event - today) / (1000 * 60 * 60 * 24)) <= 7;
+  }
+
+  get showHourlyOption()     { return !this.isMuhurtham || this.muhurthamAllowsHourly; }
+
   get availabilityIsGood()   { return this.availability === 'AVAILABLE'; }
   get availabilityIsPending(){ return this.availability === 'UNDER_ENQUIRY'; }
   get availabilityIsBlocked(){ return this.availability === 'UNAVAILABLE'; }
@@ -379,7 +395,7 @@ export default class EnquiryForm extends Component {
         this.availability = data.status;
         this.isMuhurtham  = data.isMuhurtham || false;
         this.bookedSlots  = data.bookedSlots  || [];
-        if (this.isMuhurtham && this.rentalType === 'HOURLY') {
+        if (this.isMuhurtham && this.rentalType === 'HOURLY' && !this.muhurthamAllowsHourly) {
           this.rentalType = '';
         }
       }
@@ -554,17 +570,26 @@ export default class EnquiryForm extends Component {
             <option value="FULL_DAY">{{this.t.fullDayOption}}</option>
             <option value="MULTI_DAY">{{this.t.multiDayOption}}</option>
             <option value="HALF_DAY">{{this.t.halfDayOption}}</option>
-            {{#unless this.isMuhurtham}}
+            {{#if this.showHourlyOption}}
               <option value="HOURLY">{{this.t.hourlyOption}}</option>
-            {{/unless}}
+            {{/if}}
           </select>
           {{#if this.isMuhurtham}}
-            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-amber-700 animate-fade-in">
-              <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-              </svg>
-              {{this.t.muhurthamNoHourly}}
-            </p>
+            {{#if this.muhurthamAllowsHourly}}
+              <p class="mt-1.5 flex items-center gap-1.5 text-xs text-green-700 animate-fade-in">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{this.t.muhurthamHourlyException}}
+              </p>
+            {{else}}
+              <p class="mt-1.5 flex items-center gap-1.5 text-xs text-amber-700 animate-fade-in">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                </svg>
+                {{this.t.muhurthamNoHourly}}
+              </p>
+            {{/if}}
           {{/if}}
         </div>
 
@@ -657,9 +682,15 @@ export default class EnquiryForm extends Component {
               </svg>
               {{this.t.muhurthamBadge}}
             </p>
-            <div class="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-xs animate-fade-in">
+            <div class="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-xs animate-fade-in space-y-1.5">
               <p class="font-semibold text-yellow-800">{{this.t.muhurthamTitle}}</p>
-              <p class="mt-0.5 text-yellow-700">{{this.t.muhurthamPolicy}}</p>
+              <p class="text-yellow-700">{{this.t.muhurthamPolicy}}</p>
+              <div class="flex items-start gap-1.5 border-t border-yellow-200 pt-1.5">
+                <svg class="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                </svg>
+                <p class="font-medium text-amber-800">{{this.t.muhurthamRentalNote}}</p>
+              </div>
             </div>
           {{/if}}
           {{#if this.availabilityLoading}}

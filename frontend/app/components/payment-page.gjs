@@ -110,6 +110,7 @@ export default class PaymentPage extends Component {
         order_id:    order.orderId,
         name:        '4S Malini Mahal',
         description: 'Hall Advance Payment',
+        image:       window.location.origin + '/logo.jpg',
         prefill:     { name: order.customerName, contact: '91' + order.mobile },
         theme:       { color: '#be123c' },
         handler: async (response) => {
