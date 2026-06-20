@@ -29,7 +29,6 @@ export default class DateRangeCalendar extends Component {
   @tracked viewYear;
   @tracked viewMonth;
   @tracked muhurthamSet = new Set();
-  @tracked hoverIso = null;
 
   constructor(owner, args) {
     super(owner, args);
@@ -56,23 +55,11 @@ export default class DateRangeCalendar extends Component {
   get checkOut() { return this.args.checkOut || ''; }
 
   get headerLabel() { return `${MONTH_NAMES[this.viewMonth]} ${this.viewYear}`; }
-
   get cantGoPrev() {
     const [my, mm] = this.min.split('-').map(Number);
     return !(this.viewYear > my || (this.viewYear === my && this.viewMonth + 1 > mm));
   }
-
   get dayLabels() { return ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']; }
-
-  get rangeEnd() {
-    const ci  = this.checkIn;
-    const co  = this.checkOut;
-    const hov = this.hoverIso;
-    if (!ci) return '';
-    if (co)  return co;
-    if (hov && hov > ci) return hov;
-    return '';
-  }
 
   get weeks() {
     const y   = this.viewYear;
@@ -80,7 +67,6 @@ export default class DateRangeCalendar extends Component {
     const min = this.min;
     const ci  = this.checkIn;
     const co  = this.checkOut;
-    const re  = this.rangeEnd;
 
     const firstDow    = new Date(y, m, 1).getDay();
     const daysInMonth = new Date(y, m + 1, 0).getDate();
@@ -99,33 +85,20 @@ export default class DateRangeCalendar extends Component {
       const isToday     = iso === this.today;
       const isCheckIn   = iso === ci;
       const isCheckOut  = !!(ci && co && iso === co);
-      const isInRange   = !!(ci && re && iso > ci && iso < re);
-      const isHoverEnd  = !!(this.hoverIso === iso && !co && ci && iso > ci);
-      const hasRange    = !!(ci && re && re > ci);
+      const isInRange   = !!(ci && co && iso > ci && iso < co);
       const isEndpoint  = isCheckIn || isCheckOut;
 
-      let wrapCls = 'h-10 flex items-center justify-center';
-      if (isCheckIn && hasRange && !isCheckOut) {
-        wrapCls += ' range-start-bg';
-      } else if (isCheckOut) {
-        wrapCls += ' range-end-bg';
-      } else if (isHoverEnd) {
-        wrapCls += ' hover-end-bg';
-      } else if (isInRange) {
-        wrapCls += ' bg-rose-100';
-      }
+      // Replicates DatePickerCalendar cls pattern exactly, with range additions
+      let cls = 'relative flex flex-col items-center justify-center h-10 w-full rounded-xl text-sm transition-all duration-100 ';
 
-      let cls = 'relative flex flex-col items-center justify-center h-9 w-9 text-sm rounded-full ';
       if (isCheckIn || isCheckOut) {
         cls += 'bg-rose-700 text-white font-bold shadow-md cursor-pointer';
-      } else if (isHoverEnd) {
-        cls += 'bg-rose-200 text-rose-800 font-semibold cursor-pointer';
       } else if (isInRange) {
         cls += isMuhurtham
           ? 'bg-amber-200 text-amber-900 font-semibold cursor-pointer hover:bg-amber-300'
-          : 'text-rose-800 font-medium cursor-pointer hover:bg-rose-200';
+          : 'bg-rose-100 text-rose-800 font-medium cursor-pointer hover:bg-rose-200';
       } else if (isPast) {
-        cls += 'text-stone-300 cursor-not-allowed';
+        cls += 'text-stone-300 cursor-not-allowed font-normal';
       } else if (isMuhurtham && isToday) {
         cls += 'bg-amber-100 text-amber-900 font-semibold ring-2 ring-rose-400 cursor-pointer hover:bg-amber-200';
       } else if (isMuhurtham) {
@@ -136,8 +109,8 @@ export default class DateRangeCalendar extends Component {
         cls += 'text-stone-700 font-medium cursor-pointer hover:bg-stone-100';
       }
 
-      cells.push({ key: iso, label: d, outside: false, iso,
-                   isPast, isMuhurtham, isEndpoint, wrapCls, cls });
+      cells.push({ key: iso, label: d, outside: false, iso, isPast,
+                   isMuhurtham, isEndpoint, cls });
     }
 
     let next = 1;
@@ -173,52 +146,30 @@ export default class DateRangeCalendar extends Component {
     else this.viewMonth += 1;
   }
 
-  // Read ISO from data-date attribute — avoids any fn/closure capture issues
-  @action onCellClick(event) {
-    const iso = event.currentTarget.getAttribute('data-date');
-    if (!iso) return;
-    const min = this.min;
-    if (iso < min) return;
-
+  // Exactly mirrors DatePickerCalendar's pick action
+  @action pick(cell) {
+    if (cell.outside || cell.isPast) return;
     const ci = this.checkIn;
     const co = this.checkOut;
-    this.hoverIso = null;
 
     if (!ci || (ci && co)) {
-      this.args.onChange?.({ checkIn: iso, checkOut: '' });
-    } else if (iso <= ci) {
-      this.args.onChange?.({ checkIn: iso, checkOut: '' });
+      // No check-in yet, or both set — start fresh with new check-in
+      this.args.onChange?.({ checkIn: cell.iso, checkOut: '' });
+    } else if (cell.iso <= ci) {
+      // Clicked on or before check-in — reset check-in
+      this.args.onChange?.({ checkIn: cell.iso, checkOut: '' });
     } else {
-      this.args.onChange?.({ checkIn: ci, checkOut: iso });
+      // Have check-in, clicked after it — set check-out
+      this.args.onChange?.({ checkIn: ci, checkOut: cell.iso });
     }
   }
-
-  @action onCellHover(event) {
-    const iso = event.currentTarget.getAttribute('data-date');
-    if (!iso) return;
-    const ci = this.checkIn;
-    const co = this.checkOut;
-    if (ci && !co && iso > ci) {
-      this.hoverIso = iso;
-    } else {
-      this.hoverIso = null;
-    }
-  }
-
-  @action clearHover() { this.hoverIso = null; }
 
   <template>
-    <style>
-      .range-start-bg { background: linear-gradient(to right, transparent 50%, rgb(255 228 230) 50%); }
-      .range-end-bg   { background: linear-gradient(to right, rgb(255 228 230) 50%, transparent 50%); }
-      .hover-end-bg   { background: linear-gradient(to right, rgb(255 241 242) 50%, transparent 50%); }
-    </style>
-
     <div class="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
 
       {{! Check-in / Check-out header }}
       <div class="grid grid-cols-2 border-b border-stone-200">
-        <div class="px-4 py-3 border-r border-stone-200 {{if this.pickingCheckIn 'bg-rose-50' ''}}">
+        <div class="px-4 py-3 border-r border-stone-200 {{if this.pickingCheckIn 'bg-rose-50'}}">
           <p class="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5">
             {{this.checkInLabel}}
             {{#if this.pickingCheckIn}}<span class="ml-1 text-rose-500">←</span>{{/if}}
@@ -227,7 +178,7 @@ export default class DateRangeCalendar extends Component {
             {{this.checkInDisplay}}
           </p>
         </div>
-        <div class="px-4 py-3 {{if this.pickingCheckOut 'bg-rose-50' ''}}">
+        <div class="px-4 py-3 {{if this.pickingCheckOut 'bg-rose-50'}}">
           <p class="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5">
             {{this.checkOutLabel}}
             {{#if this.pickingCheckOut}}<span class="ml-1 text-rose-500">←</span>{{/if}}
@@ -242,15 +193,15 @@ export default class DateRangeCalendar extends Component {
       <div class="flex items-center justify-between px-4 py-3 border-b border-stone-100 bg-stone-50">
         <button type="button"
           disabled={{this.cantGoPrev}}
-          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200 disabled:opacity-25 disabled:cursor-not-allowed"
+          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-200 disabled:opacity-25 disabled:cursor-not-allowed"
           {{on "click" this.prevMonth}}>
           <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
           </svg>
         </button>
-        <span class="text-sm font-semibold text-stone-800 select-none">{{this.headerLabel}}</span>
+        <span class="text-sm font-semibold text-stone-800 tracking-wide select-none">{{this.headerLabel}}</span>
         <button type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200"
+          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-200"
           {{on "click" this.nextMonth}}>
           <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
@@ -265,31 +216,27 @@ export default class DateRangeCalendar extends Component {
         {{/each}}
       </div>
 
-      {{! Calendar grid }}
-      <div class="px-3 pb-3 space-y-0.5" {{on "mouseleave" this.clearHover}}>
+      {{! Calendar grid — identical structure to DatePickerCalendar }}
+      <div class="px-3 pb-3 space-y-1">
         {{#each this.weeks as |week|}}
-          <div class="grid grid-cols-7">
+          <div class="grid grid-cols-7 gap-1">
             {{#each week as |cell|}}
               {{#if cell.outside}}
                 <div class="h-10"></div>
               {{else}}
-                <div class={{cell.wrapCls}}>
-                  <button
-                    type="button"
-                    data-date={{cell.iso}}
-                    class={{cell.cls}}
-                    {{on "click" this.onCellClick}}
-                    {{on "mouseenter" this.onCellHover}}
-                  >
-                    <span class="leading-none">{{cell.label}}</span>
-                    {{#if cell.isMuhurtham}}
-                      <span
-                        class="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full {{if cell.isEndpoint 'bg-amber-300' 'bg-amber-500'}}"
-                        aria-hidden="true"
-                      ></span>
-                    {{/if}}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  class={{cell.cls}}
+                  {{on "click" (fn this.pick cell)}}
+                >
+                  <span class="leading-none">{{cell.label}}</span>
+                  {{#if cell.isMuhurtham}}
+                    <span
+                      class="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full {{if cell.isEndpoint 'bg-amber-300' 'bg-amber-500'}}"
+                      aria-hidden="true"
+                    ></span>
+                  {{/if}}
+                </button>
               {{/if}}
             {{/each}}
           </div>
@@ -299,23 +246,24 @@ export default class DateRangeCalendar extends Component {
       {{! Legend }}
       <div class="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-stone-100 px-4 py-2.5 text-xs text-stone-500 bg-stone-50 select-none">
         <span class="flex items-center gap-1.5">
-          <span class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 border border-amber-300">
+          <span class="inline-flex h-4 w-4 items-center justify-center rounded-lg bg-amber-100 border border-amber-300">
             <span class="h-1 w-1 rounded-full bg-amber-500"></span>
           </span>
           {{this.legendMuhurtham}}
         </span>
         <span class="flex items-center gap-1.5">
-          <span class="inline-block h-4 w-4 rounded-full ring-2 ring-rose-400 bg-white"></span>
+          <span class="inline-block h-4 w-4 rounded-lg ring-2 ring-rose-400 bg-white"></span>
           {{this.legendToday}}
         </span>
         <span class="flex items-center gap-1.5">
-          <span class="flex h-4">
-            <span class="w-3 h-4 bg-rose-700 rounded-l-full"></span>
-            <span class="w-3 h-4 bg-rose-100"></span>
-            <span class="w-3 h-4 bg-rose-100"></span>
-            <span class="w-3 h-4 bg-rose-700 rounded-r-full"></span>
+          <span class="inline-flex h-4 w-4 rounded-lg bg-rose-700 items-center justify-center">
+            <span class="h-1.5 w-1.5 rounded-full bg-rose-100"></span>
           </span>
-          {{this.checkInLabel}} → {{this.checkOutLabel}}
+          {{this.checkInLabel}} / {{this.checkOutLabel}}
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block h-4 w-4 rounded-lg bg-rose-100 border border-rose-200"></span>
+          Range
         </span>
       </div>
     </div>
