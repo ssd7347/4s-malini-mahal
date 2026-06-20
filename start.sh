@@ -11,6 +11,10 @@ mvn package -q -DskipTests
 cd ..
 echo "==> Build done."
 
+# Kill any existing Tomcat process to avoid port conflicts on restart
+pkill -f "catalina" 2>/dev/null || true
+sleep 1
+
 # Download Tomcat once (persists across restarts)
 if [ ! -d "$TOMCAT_DIR" ]; then
   echo "==> Downloading Tomcat..."
