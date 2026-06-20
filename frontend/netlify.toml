@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/malinimahal/*"
-  to = "https://KOYEB_URL/malinimahal/:splat"
+  to = "https://ad2d0b32-f9d2-4722-997d-88a6adc1c868-00-iiv8by951cd5.picard.replit.dev/malinimahal/:splat"
   status = 200
   force = true
 
