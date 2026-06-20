@@ -1,7 +1,10 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
+import { action } from '@ember/object';
 import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
+import { on } from '@ember/modifier';
+import { fn } from '@ember/helper';
 import MyBookings from 'frontend/components/my-bookings';
 import { apiUrl } from 'frontend/utils/api';
 
@@ -26,7 +29,7 @@ const T = {
     am1: 'AC Hall',           am1d: 'Fully air-conditioned across both floors',
     am2: 'Bride & Groom Rooms', am2d: 'Private, well-furnished AC rooms',
     am3: 'Dining Hall',       am3d: 'Spacious dining area with modern setup',
-    am4: 'Stage',             am4d: 'Decorated stage for all occasions',
+    am4: 'Stage',             am4d: 'Stage for all occasions — decoration charged separately',
     am5: 'Kitchen',           am5d: 'Full kitchen with gas connection',
     am6: 'Parking',           am6d: 'Ample vehicle parking for all guests',
 
@@ -49,6 +52,43 @@ const T = {
     whatsappUs:    'WhatsApp us',
     locationShort: 'Virudhunagar Main Rd, Thiruthangal',
     viewContact:   'View full contact page',
+
+    stat1n: '200+',   stat1l: 'Guests Capacity',
+    stat2n: '2',      stat2l: 'Floors',
+    stat3n: '22',     stat3l: 'Months of Service',
+    stat4n: '6',      stat4l: 'Amenities',
+
+    aboutLabel: 'The Venue',
+    aboutTitle: 'Your Perfect Celebration Space',
+    aboutP1: '4S Malini Mahal is a premier kalyana mandapam in Thiruthangal, thoughtfully designed to make every celebration truly memorable. With a spacious hall spread across two floors and fully air-conditioned throughout, our venue comfortably accommodates up to 200 guests — perfect for weddings, receptions, engagements, and all family celebrations.',
+    aboutP2: 'We take pride in providing everything a family needs under one roof — a beautifully decorated stage, private air-conditioned rooms for the bride and groom, a fully equipped kitchen with gas connections, a spacious dining area, and ample vehicle parking. Every detail is thoughtfully managed so you can focus entirely on your celebration.',
+    aboutH1: '100% Air Conditioned',
+    aboutH2: 'Dedicated Stage Available',
+    aboutH3: 'Online Booking Available',
+    aboutH4: 'Transparent, Fixed Pricing',
+
+    capTitle: 'Comfortable Space for Every Gathering',
+    capSub:   'Two floors, one complete celebration experience',
+    cap1n: '200', cap1l: 'Total Capacity', cap1d: 'Combined across both floors',
+    cap2n: '120', cap2l: 'Floor 1',        cap2d: 'Ground floor main hall',
+    cap3n: '80',  cap3l: 'Floor 2',        cap3d: 'Upper floor seating',
+    cap4n: '2+',  cap4l: 'Private Rooms',  cap4d: 'Bride and groom AC rooms',
+
+    testimonialsTitle: 'Trusted by Families',
+    t1q: 'A beautiful, well-maintained hall that made our wedding truly special. The AC halls are excellent and the stage was wonderfully decorated.',
+    t1i: 'KF', t1n: 'Kumar Family',    t1l: 'Thiruthangal',
+    t2q: 'Booking online was so easy. Clear pricing with no hidden charges at all. Highly recommend to anyone planning a function.',
+    t2i: 'PS', t2n: 'Priya S.',        t2l: 'Sivakasi',
+    t3q: 'The bride and groom rooms are well-furnished and spacious. The staff was very helpful and cooperative throughout our event.',
+    t3i: 'AF', t3n: 'Anandan Family',  t3l: 'Virudhunagar',
+
+    locationLabel:  'Location',
+    locationTitle:  'Find Us in Thiruthangal',
+    locationAddr1:  '4S Malini Mahal',
+    locationAddr2:  'Virudhunagar Main Road',
+    locationAddr3:  'Thiruthangal — 626 130',
+    locationNearby: 'Near Thiruthangal Bus Stand, Virudhunagar District',
+    locationGetDir: 'Get Directions',
   },
   ta: {
     badge:         'திருத்தங்கல், சிவகாசி',
@@ -70,7 +110,7 @@ const T = {
     am1: 'AC மண்டபம்',         am1d: 'இரண்டு தளங்களிலும் முழு ஏர்கண்டிஷன்',
     am2: 'மணமகள் & மணமகன் அறை', am2d: 'தனியான, நவீன AC அறைகள்',
     am3: 'சாப்பாட்டு மண்டபம்',  am3d: 'நவீன வசதியுடன் கூடிய பரந்த சாப்பாட்டு அறை',
-    am4: 'மேடை',               am4d: 'அனைத்து நிகழ்வுகளுக்கும் அலங்கரிக்கப்பட்ட மேடை',
+    am4: 'மேடை',               am4d: 'அனைத்து நிகழ்வுகளுக்கும் மேடை — அலங்காரம் தனியாக கட்டணம்',
     am5: 'சமையலறை',            am5d: 'கேஸ் இணைப்புடன் கூடிய முழு சமையலறை',
     am6: 'வாகன நிறுத்துமிடம்',  am6d: 'விருந்தினர்களுக்கு போதுமான இடவசதி',
 
@@ -93,6 +133,43 @@ const T = {
     whatsappUs:    'WhatsApp-ல் தொடர்பு கொள்ளுங்கள்',
     locationShort: 'விருதுநகர் பிரதான சாலை, திருத்தங்கல்',
     viewContact:   'தொடர்பு பக்கம்',
+
+    stat1n: '200+',   stat1l: 'விருந்தினர்கள் கொள்ளளவு',
+    stat2n: '2',      stat2l: 'தளங்கள்',
+    stat3n: '22',     stat3l: 'மாதங்கள் சேவை',
+    stat4n: '6',      stat4l: 'வசதிகள்',
+
+    aboutLabel: 'விழா மண்டபம்',
+    aboutTitle: 'உங்கள் சிறந்த விழா இடம்',
+    aboutP1: '4S மாலினி மகால் ஒரு சாதாரண மண்டபம் மட்டுமல்ல — தமிழ் குடும்பங்களுக்காக சிந்தனையுடன் வடிவமைக்கப்பட்ட முழுமையான விழா இடம். இரண்டு தளங்களில் 200 விருந்தினர்களை அமர்த்தும் வசதியுடன், முழுவதும் ஏர்கண்டிஷன், அழகிய மேடை மற்றும் மணமகள் மணமகன் அறைகளுடன் திருமணங்கள், நிச்சயதார்த்தங்கள் மற்றும் குடும்ப விழாக்களுக்கு மிகவும் ஏற்றது.',
+    aboutP2: 'ஒரே கூரையின் கீழ் குடும்பத்திற்கு தேவையான அனைத்தையும் வழங்குவதில் நாங்கள் பெருமிதப்படுகிறோம் — அழகிய மேடை, கேஸ் இணைப்புடன் கூடிய முழு சமையலறை, பரந்த சாப்பாட்டு மண்டபம் மற்றும் வாகன நிறுத்துமிடம். நீங்கள் உங்கள் விழாவில் மட்டும் கவனம் செலுத்துவதற்காக ஒவ்வொரு விவரமும் கவனமாக திட்டமிடப்பட்டுள்ளது.',
+    aboutH1: '100% ஏர்கண்டிஷன்',
+    aboutH2: 'மேடை வசதி உள்ளது',
+    aboutH3: 'ஆன்லைன் பதிவு',
+    aboutH4: 'வெளிப்படையான கட்டணம்',
+
+    capTitle: 'உங்கள் கூட்டத்திற்கு ஏற்ற இடவசதி',
+    capSub:   'இரண்டு தளங்கள், ஒரு முழுமையான விழா அனுபவம்',
+    cap1n: '200', cap1l: 'மொத்த கொள்ளளவு', cap1d: 'இரண்டு தளங்களிலும் சேர்த்து',
+    cap2n: '120', cap2l: 'தளம் 1 (கீழ்)',   cap2d: 'கீழ் தள மண்டபம்',
+    cap3n: '80',  cap3l: 'தளம் 2 (மேல்)',   cap3d: 'மேல் தள கூடுதல் இடம்',
+    cap4n: '2+',  cap4l: 'தனி அறைகள்',      cap4d: 'மணமகள் & மணமகன் AC அறைகள்',
+
+    testimonialsTitle: 'விருந்தினர்கள் கருத்துகள்',
+    t1q: 'அழகான, நன்றாக பராமரிக்கப்படும் மண்டபம். எங்கள் திருமணத்தை மிகவும் சிறப்பாக ஆக்கியது. AC மண்டபம் மற்றும் மேடை அலங்காரம் மிகவும் சிறந்தது.',
+    t1i: 'KF', t1n: 'குமார் குடும்பம்',    t1l: 'திருத்தங்கல்',
+    t2q: 'ஆன்லைன் பதிவு மிகவும் எளிதாக இருந்தது. தெளிவான கட்டணம், மறைமுக கட்டணங்கள் இல்லை. விழா திட்டமிடுவோருக்கு மிகவும் பரிந்துரைக்கிறோம்.',
+    t2i: 'PS', t2n: 'பிரியா. ச',           t2l: 'சிவகாசி',
+    t3q: 'மணமகள் மணமகன் அறைகள் மிகவும் அழகாக இருந்தன. ஊழியர்கள் மிகவும் உதவிகரமாக இருந்தனர். சமையலறை வசதிகளும் சிறந்தவை.',
+    t3i: 'AF', t3n: 'ஆனந்தன் குடும்பம்',  t3l: 'விருதுநகர்',
+
+    locationLabel:  'இருப்பிடம்',
+    locationTitle:  'எங்களை கண்டறியுங்கள்',
+    locationAddr1:  '4S மாலினி மகால்',
+    locationAddr2:  'விருதுநகர் பிரதான சாலை',
+    locationAddr3:  'திருத்தங்கல் — 626 130',
+    locationNearby: 'திருத்தங்கல் பேருந்து நிலையம் அருகில்',
+    locationGetDir: 'வழி காட்டுங்கள்',
   },
 };
 
@@ -103,11 +180,39 @@ export default class HomePage extends Component {
   @service language;
 
   @tracked _galleryItems = [];
+  @tracked lightboxIndex = null;
 
   constructor(owner, args) {
     super(owner, args);
+    this._handleKey = (e) => {
+      if (this.lightboxIndex === null) return;
+      if (e.key === 'ArrowLeft')  this.prevImage();
+      else if (e.key === 'ArrowRight') this.nextImage();
+      else if (e.key === 'Escape') this.closeLightbox();
+    };
     this.loadGallery();
   }
+
+  get lightboxCount() { return Math.min(this._galleryItems.length, 6); }
+  get lightboxSrc()   { return this.lightboxIndex !== null ? this._imgSrc(this.lightboxIndex) : null; }
+  get lightboxPos()   { return this.lightboxIndex !== null ? this.lightboxIndex + 1 : 0; }
+
+  @action openLightbox(index) {
+    this.lightboxIndex = index;
+    document.removeEventListener('keydown', this._handleKey);
+    document.addEventListener('keydown', this._handleKey);
+  }
+  @action closeLightbox() {
+    this.lightboxIndex = null;
+    document.removeEventListener('keydown', this._handleKey);
+  }
+  @action prevImage() {
+    this.lightboxIndex = (this.lightboxIndex - 1 + this.lightboxCount) % this.lightboxCount;
+  }
+  @action nextImage() {
+    this.lightboxIndex = (this.lightboxIndex + 1) % this.lightboxCount;
+  }
+  @action preventClose(e) { e.stopPropagation(); }
 
   async loadGallery() {
     try {
@@ -167,6 +272,26 @@ export default class HomePage extends Component {
         </div>
       </div>
 
+      {{! ── STATS BANNER ── }}
+      <section class="mb-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-5 text-center shadow-sm">
+          <p class="text-3xl sm:text-4xl font-extrabold text-rose-700">{{this.t.stat1n}}</p>
+          <p class="mt-1 text-xs font-semibold text-rose-500 uppercase tracking-wide">{{this.t.stat1l}}</p>
+        </div>
+        <div class="rounded-2xl bg-amber-50 border border-amber-100 p-5 text-center shadow-sm">
+          <p class="text-3xl sm:text-4xl font-extrabold text-amber-700">{{this.t.stat2n}}</p>
+          <p class="mt-1 text-xs font-semibold text-amber-500 uppercase tracking-wide">{{this.t.stat2l}}</p>
+        </div>
+        <div class="rounded-2xl bg-green-50 border border-green-100 p-5 text-center shadow-sm">
+          <p class="text-3xl sm:text-4xl font-extrabold text-green-700">{{this.t.stat3n}}</p>
+          <p class="mt-1 text-xs font-semibold text-green-500 uppercase tracking-wide">{{this.t.stat3l}}</p>
+        </div>
+        <div class="rounded-2xl bg-purple-50 border border-purple-100 p-5 text-center shadow-sm">
+          <p class="text-3xl sm:text-4xl font-extrabold text-purple-700">{{this.t.stat4n}}</p>
+          <p class="mt-1 text-xs font-semibold text-purple-500 uppercase tracking-wide">{{this.t.stat4l}}</p>
+        </div>
+      </section>
+
       {{! Your Bookings — shown only when logged in }}
       {{#if this.auth.isLoggedIn}}
         <div class="mb-8">
@@ -202,6 +327,53 @@ export default class HomePage extends Component {
               </svg>
             </div>
           {{/if}}
+        </div>
+      </section>
+
+      {{! ── ABOUT THE VENUE ── }}
+      <section class="mb-12">
+        <div class="rounded-2xl overflow-hidden border border-stone-200 shadow-sm">
+          <div class="grid md:grid-cols-2">
+
+            <div class="p-8 flex flex-col justify-center">
+              <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">{{this.t.aboutLabel}}</p>
+              <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 leading-snug mb-4">{{this.t.aboutTitle}}</h2>
+              <p class="text-stone-500 leading-relaxed mb-4">{{this.t.aboutP1}}</p>
+              <p class="text-stone-500 leading-relaxed mb-6">{{this.t.aboutP2}}</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center gap-2 text-sm text-stone-700">
+                  <svg class="h-4 w-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{this.t.aboutH1}}
+                </div>
+                <div class="flex items-center gap-2 text-sm text-stone-700">
+                  <svg class="h-4 w-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{this.t.aboutH2}}
+                </div>
+                <div class="flex items-center gap-2 text-sm text-stone-700">
+                  <svg class="h-4 w-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{this.t.aboutH3}}
+                </div>
+                <div class="flex items-center gap-2 text-sm text-stone-700">
+                  <svg class="h-4 w-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{this.t.aboutH4}}
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-rose-100 min-h-64 relative">
+              {{#if this.gi1}}
+                <img src={{this.gi1}} alt="Malini Mahal Interior" class="w-full h-full object-cover absolute inset-0" />
+              {{else}}
+                <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                  <svg class="h-20 w-20 text-rose-300 mb-4" fill="none" stroke="currentColor" stroke-width="0.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+                  </svg>
+                  <p class="text-rose-400 font-semibold">4S Malini Mahal</p>
+                </div>
+              {{/if}}
+            </div>
+
+          </div>
         </div>
       </section>
 
@@ -267,6 +439,37 @@ export default class HomePage extends Component {
             <p class="font-semibold text-stone-800">{{this.t.ev6}}</p>
           </div>
 
+        </div>
+      </section>
+
+      {{! ── CAPACITY & SPACE ── }}
+      <section class="mb-12">
+        <div class="text-center mb-6">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Space</p>
+          <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.capTitle}}</h2>
+          <p class="mt-1 text-sm text-stone-400">{{this.t.capSub}}</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="rounded-2xl border-2 border-rose-200 bg-rose-50 p-6 text-center shadow-sm">
+            <p class="text-4xl font-extrabold text-rose-700 mb-1">{{this.t.cap1n}}</p>
+            <p class="font-semibold text-stone-800 text-sm">{{this.t.cap1l}}</p>
+            <p class="text-xs text-stone-400 mt-1">{{this.t.cap1d}}</p>
+          </div>
+          <div class="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
+            <p class="text-4xl font-extrabold text-stone-700 mb-1">{{this.t.cap2n}}</p>
+            <p class="font-semibold text-stone-700 text-sm">{{this.t.cap2l}}</p>
+            <p class="text-xs text-stone-400 mt-1">{{this.t.cap2d}}</p>
+          </div>
+          <div class="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
+            <p class="text-4xl font-extrabold text-stone-700 mb-1">{{this.t.cap3n}}</p>
+            <p class="font-semibold text-stone-700 text-sm">{{this.t.cap3l}}</p>
+            <p class="text-xs text-stone-400 mt-1">{{this.t.cap3d}}</p>
+          </div>
+          <div class="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
+            <p class="text-4xl font-extrabold text-stone-700 mb-1">{{this.t.cap4n}}</p>
+            <p class="font-semibold text-stone-700 text-sm">{{this.t.cap4l}}</p>
+            <p class="text-xs text-stone-400 mt-1">{{this.t.cap4d}}</p>
+          </div>
         </div>
       </section>
 
@@ -374,6 +577,77 @@ export default class HomePage extends Component {
         </div>
       </section>
 
+      {{! ── TESTIMONIALS ── }}
+      <section class="mb-12">
+        <div class="text-center mb-6">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Reviews</p>
+          <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.testimonialsTitle}}</h2>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-4">
+
+          <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm flex flex-col">
+            <div class="flex gap-0.5 mb-3">
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <p class="text-stone-600 text-sm leading-relaxed mb-4 grow">{{this.t.t1q}}</p>
+            <div class="flex items-center gap-3 mt-auto pt-3 border-t border-stone-100">
+              <div class="h-9 w-9 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                <span class="text-xs font-bold text-rose-700">{{this.t.t1i}}</span>
+              </div>
+              <div>
+                <p class="font-semibold text-stone-800 text-sm">{{this.t.t1n}}</p>
+                <p class="text-xs text-stone-400">{{this.t.t1l}}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm flex flex-col">
+            <div class="flex gap-0.5 mb-3">
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <p class="text-stone-600 text-sm leading-relaxed mb-4 grow">{{this.t.t2q}}</p>
+            <div class="flex items-center gap-3 mt-auto pt-3 border-t border-stone-100">
+              <div class="h-9 w-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <span class="text-xs font-bold text-amber-700">{{this.t.t2i}}</span>
+              </div>
+              <div>
+                <p class="font-semibold text-stone-800 text-sm">{{this.t.t2n}}</p>
+                <p class="text-xs text-stone-400">{{this.t.t2l}}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm flex flex-col">
+            <div class="flex gap-0.5 mb-3">
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <p class="text-stone-600 text-sm leading-relaxed mb-4 grow">{{this.t.t3q}}</p>
+            <div class="flex items-center gap-3 mt-auto pt-3 border-t border-stone-100">
+              <div class="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <span class="text-xs font-bold text-green-700">{{this.t.t3i}}</span>
+              </div>
+              <div>
+                <p class="font-semibold text-stone-800 text-sm">{{this.t.t3n}}</p>
+                <p class="text-xs text-stone-400">{{this.t.t3l}}</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {{! ── GALLERY PREVIEW ── }}
       {{#if this.hasGallery}}
         <section class="mb-12">
@@ -387,15 +661,80 @@ export default class HomePage extends Component {
             </LinkTo>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {{#if this.gi0}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi0}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
-            {{#if this.gi1}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi1}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
-            {{#if this.gi2}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi2}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
-            {{#if this.gi3}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi3}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
-            {{#if this.gi4}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi4}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
-            {{#if this.gi5}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi5}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
+            {{#if this.gi0}}<button type="button" {{on "click" (fn this.openLightbox 0)}} class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm cursor-zoom-in block w-full group"><img src={{this.gi0}} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /></button>{{/if}}
+            {{#if this.gi1}}<button type="button" {{on "click" (fn this.openLightbox 1)}} class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm cursor-zoom-in block w-full group"><img src={{this.gi1}} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /></button>{{/if}}
+            {{#if this.gi2}}<button type="button" {{on "click" (fn this.openLightbox 2)}} class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm cursor-zoom-in block w-full group"><img src={{this.gi2}} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /></button>{{/if}}
+            {{#if this.gi3}}<button type="button" {{on "click" (fn this.openLightbox 3)}} class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm cursor-zoom-in block w-full group"><img src={{this.gi3}} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /></button>{{/if}}
+            {{#if this.gi4}}<button type="button" {{on "click" (fn this.openLightbox 4)}} class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm cursor-zoom-in block w-full group"><img src={{this.gi4}} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /></button>{{/if}}
+            {{#if this.gi5}}<button type="button" {{on "click" (fn this.openLightbox 5)}} class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm cursor-zoom-in block w-full group"><img src={{this.gi5}} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /></button>{{/if}}
           </div>
         </section>
       {{/if}}
+
+      {{! ── LOCATION ── }}
+      <section class="mb-12">
+        <div class="text-center mb-6">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">{{this.t.locationLabel}}</p>
+          <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.locationTitle}}</h2>
+        </div>
+        <div class="rounded-2xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+          <div class="grid md:grid-cols-2">
+
+            <div class="p-8 border-b md:border-b-0 md:border-r border-stone-100">
+              <div class="space-y-5">
+                <div class="flex items-start gap-4">
+                  <div class="h-10 w-10 rounded-xl bg-rose-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg class="h-5 w-5 text-rose-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="font-bold text-stone-800">{{this.t.locationAddr1}}</p>
+                    <p class="text-stone-500 text-sm">{{this.t.locationAddr2}}</p>
+                    <p class="text-stone-500 text-sm">{{this.t.locationAddr3}}</p>
+                    <p class="text-stone-400 text-xs mt-1">{{this.t.locationNearby}}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
+                    <svg class="h-5 w-5 text-green-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
+                    </svg>
+                  </div>
+                  <a href="tel:+919443380023" class="font-semibold text-stone-700 hover:text-rose-700 transition-colors">+91 94433 80023</a>
+                </div>
+              </div>
+              <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                <a href="https://maps.app.goo.gl/JeJpq91QKdKQLGHb9" target="_blank" rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-700 hover:bg-rose-800 px-5 py-2.5 text-sm font-bold text-white transition-colors">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                  {{this.t.locationGetDir}}
+                </a>
+                <a href="https://wa.me/919443380023" target="_blank" rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl border border-green-300 bg-green-50 hover:bg-green-100 px-5 py-2.5 text-sm font-bold text-green-700 transition-colors">
+                  <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                  {{this.t.whatsappUs}}
+                </a>
+              </div>
+            </div>
+
+            <div class="bg-rose-50 flex flex-col items-center justify-center p-10 text-center">
+              <div class="h-20 w-20 rounded-full bg-white border-4 border-rose-200 shadow-sm flex items-center justify-center mb-5">
+                <svg class="h-10 w-10 text-rose-600" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
+                </svg>
+              </div>
+              <p class="font-bold text-stone-800 text-lg">4S Malini Mahal</p>
+              <p class="text-stone-500 text-sm mt-1">{{this.t.locationNearby}}</p>
+              <div class="mt-4 pt-4 border-t border-rose-100 w-full">
+                <p class="text-xs text-stone-400">Thiruthangal — 626 130, Tamil Nadu</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
 
       {{! ── WHY US + CONTACT ── }}
       <div class="grid sm:grid-cols-2 gap-6 mb-8">
@@ -463,5 +802,45 @@ export default class HomePage extends Component {
       </div>
 
     </div>
+
+    {{! ── LIGHTBOX ── }}
+    {{#if this.lightboxSrc}}
+      <div class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" role="dialog" aria-modal="true" {{on "click" this.closeLightbox}}>
+
+        <div class="relative flex items-center gap-3 sm:gap-5 px-3 sm:px-5 max-w-5xl w-full" {{on "click" this.preventClose}}>
+
+          <button type="button" {{on "click" this.prevImage}}
+            class="shrink-0 h-11 w-11 rounded-full bg-white/10 hover:bg-white/30 flex items-center justify-center text-white transition-colors">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+            </svg>
+          </button>
+
+          <div class="relative flex-1 min-w-0 flex items-center justify-center">
+            <img src={{this.lightboxSrc}} alt="Gallery image" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" />
+            <button type="button" {{on "click" this.closeLightbox}}
+              class="absolute -top-3 -right-3 h-9 w-9 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition-colors">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <button type="button" {{on "click" this.nextImage}}
+            class="shrink-0 h-11 w-11 rounded-full bg-white/10 hover:bg-white/30 flex items-center justify-center text-white transition-colors">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+            </svg>
+          </button>
+
+        </div>
+
+        <p class="absolute bottom-4 left-0 right-0 text-center text-white/30 text-xs pointer-events-none">
+          {{this.lightboxPos}} / {{this.lightboxCount}} · Arrow keys to navigate · Esc to close
+        </p>
+
+      </div>
+    {{/if}}
+
   </template>
 }
