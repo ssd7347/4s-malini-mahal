@@ -17,7 +17,7 @@ const T = {
     checkAvail:    'Check Availability',
 
     welcomeTitle:  'Welcome to 4S Malini Mahal',
-    welcomeBody:   'Located in the heart of Thiruthangal, 4S Malini Mahal is a fully air-conditioned banquet hall designed for weddings, receptions, and all kinds of family celebrations. With space for up to 200 guests across two floors, modern facilities, and transparent pricing — we make your special day truly memorable.',
+    welcomeBody:   'Located in the heart of Thiruthangal, 4S Malini Mahal is a fully air-conditioned banquet hall designed for weddings, receptions, and all kinds of family celebrations. With space for up to 200 guests across two floors, modern facilities, and transparent pricing, we make your special day truly memorable.',
     capacity:      'Up to 200 Guests',
     capacityNote:  'Floor 1 · 120 guests · Floor 2 · 80 guests',
 
@@ -29,7 +29,7 @@ const T = {
     am1: 'AC Hall',           am1d: 'Fully air-conditioned across both floors',
     am2: 'Bride & Groom Rooms', am2d: 'Private, well-furnished AC rooms',
     am3: 'Dining Hall',       am3d: 'Spacious dining area with modern setup',
-    am4: 'Stage',             am4d: 'Stage for all occasions — decoration charged separately',
+    am4: 'Stage',             am4d: 'Stage for all occasions, decoration charged separately',
     am5: 'Kitchen',           am5d: 'Full kitchen with gas connection',
     am6: 'Parking',           am6d: 'Ample vehicle parking for all guests',
 
@@ -43,10 +43,10 @@ const T = {
     viewAll:       'View Full Gallery',
 
     whyTitle:      'Why Choose Us',
-    why1: 'Transparent pricing — no hidden charges or surprises',
+    why1: 'Transparent pricing, no hidden charges or surprises',
     why2: 'Online booking with instant confirmation and Razorpay payment',
     why3: 'Trusted by families across Thiruthangal and Sivakasi',
-    why4: 'Flexible slots — full day, half day, or hourly bookings',
+    why4: 'Flexible slots: full day, half day, or hourly bookings',
 
     contactTitle:  'Get in Touch',
     whatsappUs:    'WhatsApp us',
@@ -60,8 +60,8 @@ const T = {
 
     aboutLabel: 'The Venue',
     aboutTitle: 'Your Perfect Celebration Space',
-    aboutP1: '4S Malini Mahal is a premier kalyana mandapam in Thiruthangal, thoughtfully designed to make every celebration truly memorable. With a spacious hall spread across two floors and fully air-conditioned throughout, our venue comfortably accommodates up to 200 guests — perfect for weddings, receptions, engagements, and all family celebrations.',
-    aboutP2: 'We take pride in providing everything a family needs under one roof — a beautifully decorated stage, private air-conditioned rooms for the bride and groom, a fully equipped kitchen with gas connections, a spacious dining area, and ample vehicle parking. Every detail is thoughtfully managed so you can focus entirely on your celebration.',
+    aboutP1: '4S Malini Mahal is a premier kalyana mandapam in Thiruthangal, thoughtfully designed to make every celebration truly memorable. With a spacious hall spread across two floors and fully air-conditioned throughout, our venue comfortably accommodates up to 200 guests, perfect for weddings, receptions, engagements, and all family celebrations.',
+    aboutP2: 'We take pride in providing everything a family needs under one roof: a beautifully decorated stage, private air-conditioned rooms for the bride and groom, a fully equipped kitchen with gas connections, a spacious dining area, and ample vehicle parking. Every detail is thoughtfully managed so you can focus entirely on your celebration.',
     aboutH1: '100% Air Conditioned',
     aboutH2: 'Dedicated Stage Available',
     aboutH3: 'Online Booking Available',
@@ -86,19 +86,19 @@ const T = {
     locationTitle:  'Find Us in Thiruthangal',
     locationAddr1:  '4S Malini Mahal',
     locationAddr2:  'Virudhunagar Main Road',
-    locationAddr3:  'Thiruthangal — 626 130',
+    locationAddr3:  'Thiruthangal, 626 130',
     locationNearby: 'Near Thiruthangal Bus Stand, Virudhunagar District',
     locationGetDir: 'Get Directions',
 
     hospLabel: 'Hospitality',
     hospTitle: 'A Venue That Feels Like Home',
-    hospP1: 'At 4S Malini Mahal, we believe a great celebration is built on more than just a beautiful hall — it is built on the warmth of the welcome, the care taken in every corner, and the ease that lets your family stay fully present throughout the day.',
-    hospP2: 'Our spacious dining hall seats all your guests comfortably, our fully equipped kitchen is ready for your caterers, and every detail is maintained with care — so you can focus entirely on the moments that matter most.',
+    hospP1: 'At 4S Malini Mahal, we believe a great celebration is built on more than just a beautiful hall. It is built on the warmth of the welcome, the care taken in every corner, and the ease that lets your family stay fully present throughout the day.',
+    hospP2: 'Our spacious dining hall seats all your guests comfortably, our fully equipped kitchen is ready for your caterers, and every detail is maintained with care, so you can focus entirely on the moments that matter most.',
 
     bookLabel: 'Online Booking',
     bookTitle: 'Book in Minutes, Not Days',
-    bookP1: 'Gone are the days of multiple visits and phone calls to check availability. With 4S Malini Mahal, you can check open dates in real time, choose your rental type, and confirm your booking in minutes — right from your phone.',
-    bookP2: 'Pay your advance securely through Razorpay and receive instant confirmation. Transparent, fixed pricing means zero surprises — just a smooth, stress-free path from the first click to your celebration day.',
+    bookP1: 'Gone are the days of multiple visits and phone calls to check availability. With 4S Malini Mahal, you can check open dates in real time, choose your rental type, and confirm your booking in minutes, right from your phone.',
+    bookP2: 'Pay your advance securely through Razorpay and receive instant confirmation. Transparent, fixed pricing means zero surprises, just a smooth, stress-free path from the first click to your celebration day.',
     bookCta: 'Book Your Date',
   },
   ta: {
@@ -121,7 +121,7 @@ const T = {
     am1: 'AC மண்டபம்',         am1d: 'இரண்டு தளங்களிலும் முழு ஏர்கண்டிஷன்',
     am2: 'மணமகள் & மணமகன் அறை', am2d: 'தனியான, நவீன AC அறைகள்',
     am3: 'சாப்பாட்டு மண்டபம்',  am3d: 'நவீன வசதியுடன் கூடிய பரந்த சாப்பாட்டு அறை',
-    am4: 'மேடை',               am4d: 'அனைத்து நிகழ்வுகளுக்கும் மேடை — அலங்காரம் தனியாக கட்டணம்',
+    am4: 'மேடை',               am4d: 'அனைத்து நிகழ்வுகளுக்கும் மேடை, அலங்காரம் தனியாக கட்டணம்',
     am5: 'சமையலறை',            am5d: 'கேஸ் இணைப்புடன் கூடிய முழு சமையலறை',
     am6: 'வாகன நிறுத்துமிடம்',  am6d: 'விருந்தினர்களுக்கு போதுமான இடவசதி',
 
@@ -135,10 +135,10 @@ const T = {
     viewAll:       'முழு கேலரி பார்க்கவும்',
 
     whyTitle:      'எங்களை ஏன் தேர்வு செய்ய வேண்டும்',
-    why1: 'வெளிப்படையான கட்டணம் — மறைமுக கட்டணங்களோ அதிர்ச்சிகளோ இல்லை',
+    why1: 'வெளிப்படையான கட்டணம், மறைமுக கட்டணங்களோ அதிர்ச்சிகளோ இல்லை',
     why2: 'ஆன்லைன் பதிவு, உடனடி உறுதிப்படுத்தல் மற்றும் Razorpay கட்டணம்',
     why3: 'திருத்தங்கல் மற்றும் சிவகாசி குடும்பங்களால் நம்பப்படுகிறது',
-    why4: 'நெகிழ்வான நேர இடைவெளிகள் — முழு நாள், அரை நாள் அல்லது மணிநேரம்',
+    why4: 'நெகிழ்வான நேர இடைவெளிகள்: முழு நாள், அரை நாள் அல்லது மணிநேரம்',
 
     contactTitle:  'தொடர்பு கொள்ளுங்கள்',
     whatsappUs:    'WhatsApp-ல் தொடர்பு கொள்ளுங்கள்',
@@ -152,8 +152,8 @@ const T = {
 
     aboutLabel: 'விழா மண்டபம்',
     aboutTitle: 'உங்கள் சிறந்த விழா இடம்',
-    aboutP1: '4S மாலினி மகால் ஒரு சாதாரண மண்டபம் மட்டுமல்ல — தமிழ் குடும்பங்களுக்காக சிந்தனையுடன் வடிவமைக்கப்பட்ட முழுமையான விழா இடம். இரண்டு தளங்களில் 200 விருந்தினர்களை அமர்த்தும் வசதியுடன், முழுவதும் ஏர்கண்டிஷன், அழகிய மேடை மற்றும் மணமகள் மணமகன் அறைகளுடன் திருமணங்கள், நிச்சயதார்த்தங்கள் மற்றும் குடும்ப விழாக்களுக்கு மிகவும் ஏற்றது.',
-    aboutP2: 'ஒரே கூரையின் கீழ் குடும்பத்திற்கு தேவையான அனைத்தையும் வழங்குவதில் நாங்கள் பெருமிதப்படுகிறோம் — அழகிய மேடை, கேஸ் இணைப்புடன் கூடிய முழு சமையலறை, பரந்த சாப்பாட்டு மண்டபம் மற்றும் வாகன நிறுத்துமிடம். நீங்கள் உங்கள் விழாவில் மட்டும் கவனம் செலுத்துவதற்காக ஒவ்வொரு விவரமும் கவனமாக திட்டமிடப்பட்டுள்ளது.',
+    aboutP1: '4S மாலினி மகால் ஒரு சாதாரண மண்டபம் மட்டுமல்ல, தமிழ் குடும்பங்களுக்காக சிந்தனையுடன் வடிவமைக்கப்பட்ட முழுமையான விழா இடம். இரண்டு தளங்களில் 200 விருந்தினர்களை அமர்த்தும் வசதியுடன், முழுவதும் ஏர்கண்டிஷன், அழகிய மேடை மற்றும் மணமகள் மணமகன் அறைகளுடன் திருமணங்கள், நிச்சயதார்த்தங்கள் மற்றும் குடும்ப விழாக்களுக்கு மிகவும் ஏற்றது.',
+    aboutP2: 'ஒரே கூரையின் கீழ் குடும்பத்திற்கு தேவையான அனைத்தையும் வழங்குவதில் நாங்கள் பெருமிதப்படுகிறோம். அழகிய மேடை, கேஸ் இணைப்புடன் கூடிய முழு சமையலறை, பரந்த சாப்பாட்டு மண்டபம் மற்றும் வாகன நிறுத்துமிடம். நீங்கள் உங்கள் விழாவில் மட்டும் கவனம் செலுத்துவதற்காக ஒவ்வொரு விவரமும் கவனமாக திட்டமிடப்பட்டுள்ளது.',
     aboutH1: '100% ஏர்கண்டிஷன்',
     aboutH2: 'மேடை வசதி உள்ளது',
     aboutH3: 'ஆன்லைன் பதிவு',
@@ -178,19 +178,19 @@ const T = {
     locationTitle:  'எங்களை கண்டறியுங்கள்',
     locationAddr1:  '4S மாலினி மகால்',
     locationAddr2:  'விருதுநகர் பிரதான சாலை',
-    locationAddr3:  'திருத்தங்கல் — 626 130',
+    locationAddr3:  'திருத்தங்கல், 626 130',
     locationNearby: 'திருத்தங்கல் பேருந்து நிலையம் அருகில்',
     locationGetDir: 'வழி காட்டுங்கள்',
 
     hospLabel: 'விருந்தோம்பல்',
     hospTitle: 'வீட்டு சூழல் தரும் மண்டபம்',
-    hospP1: '4S மாலினி மகாலில் சிறந்த விழா என்பது அழகான மண்டபம் மட்டுமல்ல — அன்பான வரவேற்பு, ஒவ்வொரு மூலையிலும் கவனம், மற்றும் குடும்பம் நாள் முழுவதும் கவலையின்றி இருக்கும் எளிமை என்று நம்புகிறோம்.',
-    hospP2: 'எங்கள் பரந்த சாப்பாட்டு மண்டபம் அனைத்து விருந்தினர்களையும் அமர்த்தும், சமையலறை சமையல்காரர்களுக்கு தயாராக இருக்கும் — நீங்கள் முக்கியமான தருணங்களில் முழுவதும் கவனம் செலுத்தலாம்.',
+    hospP1: '4S மாலினி மகாலில் சிறந்த விழா என்பது அழகான மண்டபம் மட்டுமல்ல. அன்பான வரவேற்பு, ஒவ்வொரு மூலையிலும் கவனம், மற்றும் குடும்பம் நாள் முழுவதும் கவலையின்றி இருக்கும் எளிமை என்று நம்புகிறோம்.',
+    hospP2: 'எங்கள் பரந்த சாப்பாட்டு மண்டபம் அனைத்து விருந்தினர்களையும் அமர்த்தும், சமையலறை சமையல்காரர்களுக்கு தயாராக இருக்கும். நீங்கள் முக்கியமான தருணங்களில் முழுவதும் கவனம் செலுத்தலாம்.',
 
     bookLabel: 'ஆன்லைன் பதிவு',
     bookTitle: 'நிமிடங்களில் பதிவிடுங்கள்',
     bookP1: 'பல முறை வந்து தேதி சரிபார்க்கும் நாட்கள் முடிந்தன. 4S மாலினி மகால் மூலம், நிகழ்நேரத்தில் கிடைக்கும் தேதிகளை சரிபார்த்து, வாடகை வகையை தேர்வு செய்து, நிமிடங்களில் மொபைலிலிருந்தே பதிவை உறுதிப்படுத்தலாம்.',
-    bookP2: 'Razorpay மூலம் பாதுகாப்பாக முன்பணம் செலுத்தி உடனடி உறுதிப்படுத்தல் பெறுங்கள். நிலையான வெளிப்படையான கட்டணம் — எந்த ஆச்சரியமும் இல்லாமல், முதல் கிளிக்கிலிருந்து விழா நாள் வரை சுமூகமான அனுபவம்.',
+    bookP2: 'Razorpay மூலம் பாதுகாப்பாக முன்பணம் செலுத்தி உடனடி உறுதிப்படுத்தல் பெறுங்கள். நிலையான வெளிப்படையான கட்டணம், எந்த ஆச்சரியமும் இல்லாமல், முதல் கிளிக்கிலிருந்து விழா நாள் வரை சுமூகமான அனுபவம்.',
     bookCta: 'தேதியை பதிவிடுங்கள்',
   },
 };
@@ -864,7 +864,7 @@ export default class HomePage extends Component {
               <p class="font-bold text-stone-800 text-lg">4S Malini Mahal</p>
               <p class="text-stone-500 text-sm mt-1">{{this.t.locationNearby}}</p>
               <div class="mt-4 pt-4 border-t border-rose-100 w-full">
-                <p class="text-xs text-stone-400">Thiruthangal — 626 130, Tamil Nadu</p>
+                <p class="text-xs text-stone-400">Thiruthangal, 626 130, Tamil Nadu</p>
               </div>
             </div>
 
