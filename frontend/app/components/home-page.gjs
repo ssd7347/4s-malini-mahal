@@ -55,7 +55,7 @@ const T = {
 
     stat1n: '200+',   stat1l: 'Guests Capacity',
     stat2n: '2',      stat2l: 'Floors',
-    stat3n: '22',     stat3l: 'Months of Service',
+    stat3n: '2+',     stat3l: 'Years of Service',
     stat4n: '6',      stat4l: 'Amenities',
 
     aboutLabel: 'The Venue',
@@ -89,6 +89,17 @@ const T = {
     locationAddr3:  'Thiruthangal — 626 130',
     locationNearby: 'Near Thiruthangal Bus Stand, Virudhunagar District',
     locationGetDir: 'Get Directions',
+
+    hospLabel: 'Hospitality',
+    hospTitle: 'A Venue That Feels Like Home',
+    hospP1: 'At 4S Malini Mahal, we believe a great celebration is built on more than just a beautiful hall — it is built on the warmth of the welcome, the care taken in every corner, and the ease that lets your family stay fully present throughout the day.',
+    hospP2: 'Our spacious dining hall seats all your guests comfortably, our fully equipped kitchen is ready for your caterers, and every detail is maintained with care — so you can focus entirely on the moments that matter most.',
+
+    bookLabel: 'Online Booking',
+    bookTitle: 'Book in Minutes, Not Days',
+    bookP1: 'Gone are the days of multiple visits and phone calls to check availability. With 4S Malini Mahal, you can check open dates in real time, choose your rental type, and confirm your booking in minutes — right from your phone.',
+    bookP2: 'Pay your advance securely through Razorpay and receive instant confirmation. Transparent, fixed pricing means zero surprises — just a smooth, stress-free path from the first click to your celebration day.',
+    bookCta: 'Book Your Date',
   },
   ta: {
     badge:         'திருத்தங்கல், சிவகாசி',
@@ -136,7 +147,7 @@ const T = {
 
     stat1n: '200+',   stat1l: 'விருந்தினர்கள் கொள்ளளவு',
     stat2n: '2',      stat2l: 'தளங்கள்',
-    stat3n: '22',     stat3l: 'மாதங்கள் சேவை',
+    stat3n: '2+',     stat3l: 'ஆண்டுகள் சேவை',
     stat4n: '6',      stat4l: 'வசதிகள்',
 
     aboutLabel: 'விழா மண்டபம்',
@@ -170,6 +181,17 @@ const T = {
     locationAddr3:  'திருத்தங்கல் — 626 130',
     locationNearby: 'திருத்தங்கல் பேருந்து நிலையம் அருகில்',
     locationGetDir: 'வழி காட்டுங்கள்',
+
+    hospLabel: 'விருந்தோம்பல்',
+    hospTitle: 'வீட்டு சூழல் தரும் மண்டபம்',
+    hospP1: '4S மாலினி மகாலில் சிறந்த விழா என்பது அழகான மண்டபம் மட்டுமல்ல — அன்பான வரவேற்பு, ஒவ்வொரு மூலையிலும் கவனம், மற்றும் குடும்பம் நாள் முழுவதும் கவலையின்றி இருக்கும் எளிமை என்று நம்புகிறோம்.',
+    hospP2: 'எங்கள் பரந்த சாப்பாட்டு மண்டபம் அனைத்து விருந்தினர்களையும் அமர்த்தும், சமையலறை சமையல்காரர்களுக்கு தயாராக இருக்கும் — நீங்கள் முக்கியமான தருணங்களில் முழுவதும் கவனம் செலுத்தலாம்.',
+
+    bookLabel: 'ஆன்லைன் பதிவு',
+    bookTitle: 'நிமிடங்களில் பதிவிடுங்கள்',
+    bookP1: 'பல முறை வந்து தேதி சரிபார்க்கும் நாட்கள் முடிந்தன. 4S மாலினி மகால் மூலம், நிகழ்நேரத்தில் கிடைக்கும் தேதிகளை சரிபார்த்து, வாடகை வகையை தேர்வு செய்து, நிமிடங்களில் மொபைலிலிருந்தே பதிவை உறுதிப்படுத்தலாம்.',
+    bookP2: 'Razorpay மூலம் பாதுகாப்பாக முன்பணம் செலுத்தி உடனடி உறுதிப்படுத்தல் பெறுங்கள். நிலையான வெளிப்படையான கட்டணம் — எந்த ஆச்சரியமும் இல்லாமல், முதல் கிளிக்கிலிருந்து விழா நாள் வரை சுமூகமான அனுபவம்.',
+    bookCta: 'தேதியை பதிவிடுங்கள்',
   },
 };
 
@@ -335,6 +357,21 @@ export default class HomePage extends Component {
         <div class="rounded-2xl overflow-hidden border border-stone-200 shadow-sm">
           <div class="grid md:grid-cols-2">
 
+            {{! Image left on desktop, top on mobile }}
+            <div class="bg-rose-100 min-h-64 relative order-first">
+              {{#if this.gi1}}
+                <img src={{this.gi1}} alt="Malini Mahal Interior" class="w-full h-full object-cover absolute inset-0" />
+              {{else}}
+                <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                  <svg class="h-20 w-20 text-rose-300 mb-4" fill="none" stroke="currentColor" stroke-width="0.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+                  </svg>
+                  <p class="text-rose-400 font-semibold">4S Malini Mahal</p>
+                </div>
+              {{/if}}
+            </div>
+
+            {{! Text right on desktop }}
             <div class="p-8 flex flex-col justify-center">
               <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">{{this.t.aboutLabel}}</p>
               <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 leading-snug mb-4">{{this.t.aboutTitle}}</h2>
@@ -360,20 +397,76 @@ export default class HomePage extends Component {
               </div>
             </div>
 
-            <div class="bg-rose-100 min-h-64 relative">
-              {{#if this.gi1}}
-                <img src={{this.gi1}} alt="Malini Mahal Interior" class="w-full h-full object-cover absolute inset-0" />
-              {{else}}
-                <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                  <svg class="h-20 w-20 text-rose-300 mb-4" fill="none" stroke="currentColor" stroke-width="0.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
-                  </svg>
-                  <p class="text-rose-400 font-semibold">4S Malini Mahal</p>
-                </div>
-              {{/if}}
-            </div>
-
           </div>
+        </div>
+      </section>
+
+      {{! ── HOSPITALITY (diagonal: text left / image right) ── }}
+      <section class="mb-12 rounded-2xl overflow-hidden border border-stone-200 shadow-sm">
+        <div class="flex flex-col md:grid md:grid-cols-2" style="min-height:380px;">
+
+          {{! Image — top on mobile, right on desktop (via md:order-2) }}
+          <div class="relative h-56 md:h-auto md:order-2">
+            {{#if this.gi2}}
+              <img src={{this.gi2}} alt="Malini Mahal Dining Area" class="absolute inset-0 w-full h-full object-cover" />
+            {{else}}
+              <div class="absolute inset-0 bg-rose-100"></div>
+            {{/if}}
+            {{! SVG diagonal: white triangle on left edge → "/" divider }}
+            <div class="hidden md:block absolute inset-y-0 left-0 w-24 pointer-events-none">
+              <svg viewBox="0 0 96 100" preserveAspectRatio="none" class="h-full w-full">
+                <polygon points="0,0 96,0 0,100" fill="white"/>
+              </svg>
+            </div>
+          </div>
+
+          {{! Text — below image on mobile, left on desktop (via md:order-1) }}
+          <div class="bg-white p-8 flex flex-col justify-center md:order-1">
+            <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">{{this.t.hospLabel}}</p>
+            <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 leading-snug mb-4">{{this.t.hospTitle}}</h2>
+            <p class="text-stone-500 leading-relaxed mb-3">{{this.t.hospP1}}</p>
+            <p class="text-stone-500 leading-relaxed">{{this.t.hospP2}}</p>
+          </div>
+
+        </div>
+      </section>
+
+      {{! ── BOOK ONLINE (diagonal: image left \ text right) ── }}
+      <section class="mb-12 rounded-2xl overflow-hidden border border-stone-200 shadow-sm">
+        <div class="flex flex-col md:grid md:grid-cols-2" style="min-height:380px;">
+
+          {{! Image — top on mobile, left on desktop }}
+          <div class="relative h-56 md:h-auto">
+            {{#if this.gi3}}
+              <img src={{this.gi3}} alt="4S Malini Mahal Building" class="absolute inset-0 w-full h-full object-cover" />
+            {{else}}
+              <div class="absolute inset-0 bg-stone-200"></div>
+            {{/if}}
+            {{! SVG diagonal: white triangle on right edge → "\" divider }}
+            <div class="hidden md:block absolute inset-y-0 right-0 w-24 pointer-events-none">
+              <svg viewBox="0 0 96 100" preserveAspectRatio="none" class="h-full w-full">
+                <polygon points="0,0 96,0 96,100" fill="white"/>
+              </svg>
+            </div>
+          </div>
+
+          {{! Text — below image on mobile, right on desktop }}
+          <div class="bg-white p-8 flex flex-col justify-center">
+            <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">{{this.t.bookLabel}}</p>
+            <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 leading-snug mb-4">{{this.t.bookTitle}}</h2>
+            <p class="text-stone-500 leading-relaxed mb-3">{{this.t.bookP1}}</p>
+            <p class="text-stone-500 leading-relaxed mb-6">{{this.t.bookP2}}</p>
+            <div>
+              <LinkTo @route="booking"
+                class="inline-flex items-center gap-2 rounded-xl bg-rose-700 hover:bg-rose-800 px-6 py-2.5 text-sm font-bold text-white transition-colors">
+                {{this.t.bookCta}}
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+                </svg>
+              </LinkTo>
+            </div>
+          </div>
+
         </div>
       </section>
 
