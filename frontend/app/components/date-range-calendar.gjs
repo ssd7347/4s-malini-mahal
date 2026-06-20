@@ -29,7 +29,7 @@ export default class DateRangeCalendar extends Component {
   @tracked viewYear;
   @tracked viewMonth;
   @tracked muhurthamSet = new Set();
-  @tracked _hoverIso = null;
+  @tracked hoverIso = null;
 
   constructor(owner, args) {
     super(owner, args);
@@ -50,22 +50,24 @@ export default class DateRangeCalendar extends Component {
     } catch (_) {}
   }
 
-  get today()       { return todayStr(); }
-  get min()         { return this.args.min || this.today; }
+  get today()    { return todayStr(); }
+  get min()      { return this.args.min || this.today; }
+  get checkIn()  { return this.args.checkIn  || ''; }
+  get checkOut() { return this.args.checkOut || ''; }
+
   get headerLabel() { return `${MONTH_NAMES[this.viewMonth]} ${this.viewYear}`; }
+
   get cantGoPrev() {
     const [my, mm] = this.min.split('-').map(Number);
     return !(this.viewYear > my || (this.viewYear === my && this.viewMonth + 1 > mm));
   }
+
   get dayLabels() { return ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']; }
 
-  get checkIn()  { return this.args.checkIn  || ''; }
-  get checkOut() { return this.args.checkOut || ''; }
-
-  get _rangeEnd() {
+  get rangeEnd() {
     const ci  = this.checkIn;
     const co  = this.checkOut;
-    const hov = this._hoverIso;
+    const hov = this.hoverIso;
     if (!ci) return '';
     if (co)  return co;
     if (hov && hov > ci) return hov;
@@ -78,7 +80,7 @@ export default class DateRangeCalendar extends Component {
     const min = this.min;
     const ci  = this.checkIn;
     const co  = this.checkOut;
-    const re  = this._rangeEnd;
+    const re  = this.rangeEnd;
 
     const firstDow    = new Date(y, m, 1).getDay();
     const daysInMonth = new Date(y, m + 1, 0).getDate();
@@ -87,7 +89,7 @@ export default class DateRangeCalendar extends Component {
     const cells = [];
 
     for (let i = firstDow - 1; i >= 0; i--) {
-      cells.push({ key: `p${i}`, label: daysInPrev - i, outside: true, iso: null });
+      cells.push({ key: `p${i}`, label: daysInPrev - i, outside: true });
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -98,51 +100,49 @@ export default class DateRangeCalendar extends Component {
       const isCheckIn   = iso === ci;
       const isCheckOut  = !!(ci && co && iso === co);
       const isInRange   = !!(ci && re && iso > ci && iso < re);
-      const isHoverEnd  = !co && this._hoverIso === iso && iso > ci;
+      const isHoverEnd  = !!(this.hoverIso === iso && !co && ci && iso > ci);
       const hasRange    = !!(ci && re && re > ci);
       const isEndpoint  = isCheckIn || isCheckOut;
 
       let wrapCls = 'h-10 flex items-center justify-center';
-      if (isCheckIn && isCheckOut) {
-        // single-day — no strip
-      } else if (isCheckIn && hasRange) {
-        wrapCls += ' bg-gradient-to-r from-transparent to-rose-100';
+      if (isCheckIn && hasRange && !isCheckOut) {
+        wrapCls += ' range-start-bg';
       } else if (isCheckOut) {
-        wrapCls += ' bg-gradient-to-r from-rose-100 to-transparent';
+        wrapCls += ' range-end-bg';
       } else if (isHoverEnd) {
-        wrapCls += ' bg-gradient-to-r from-rose-50 to-transparent';
+        wrapCls += ' hover-end-bg';
       } else if (isInRange) {
         wrapCls += ' bg-rose-100';
       }
 
-      let cls = 'relative flex flex-col items-center justify-center h-9 w-9 text-sm transition-colors duration-100 ';
+      let cls = 'relative flex flex-col items-center justify-center h-9 w-9 text-sm rounded-full ';
       if (isCheckIn || isCheckOut) {
-        cls += 'rounded-full bg-rose-700 text-white font-bold shadow-md cursor-pointer';
+        cls += 'bg-rose-700 text-white font-bold shadow-md cursor-pointer';
       } else if (isHoverEnd) {
-        cls += 'rounded-full bg-rose-200 text-rose-800 font-semibold cursor-pointer';
+        cls += 'bg-rose-200 text-rose-800 font-semibold cursor-pointer';
       } else if (isInRange) {
         cls += isMuhurtham
           ? 'bg-amber-200 text-amber-900 font-semibold cursor-pointer hover:bg-amber-300'
-          : 'bg-transparent text-rose-800 font-medium cursor-pointer hover:bg-rose-200';
+          : 'text-rose-800 font-medium cursor-pointer hover:bg-rose-200';
       } else if (isPast) {
-        cls += 'rounded-full text-stone-300 cursor-not-allowed';
+        cls += 'text-stone-300 cursor-not-allowed';
       } else if (isMuhurtham && isToday) {
-        cls += 'rounded-full bg-amber-100 text-amber-900 font-semibold ring-2 ring-rose-400 cursor-pointer hover:bg-amber-200';
+        cls += 'bg-amber-100 text-amber-900 font-semibold ring-2 ring-rose-400 cursor-pointer hover:bg-amber-200';
       } else if (isMuhurtham) {
-        cls += 'rounded-full bg-amber-100 text-amber-900 font-semibold cursor-pointer hover:bg-amber-200';
+        cls += 'bg-amber-100 text-amber-900 font-semibold cursor-pointer hover:bg-amber-200';
       } else if (isToday) {
-        cls += 'rounded-full ring-2 ring-rose-400 text-rose-700 font-semibold cursor-pointer hover:bg-rose-50';
+        cls += 'ring-2 ring-rose-400 text-rose-700 font-semibold cursor-pointer hover:bg-rose-50';
       } else {
-        cls += 'rounded-full text-stone-700 font-medium cursor-pointer hover:bg-stone-100';
+        cls += 'text-stone-700 font-medium cursor-pointer hover:bg-stone-100';
       }
 
-      cells.push({ key: iso, label: d, outside: false, iso, isPast, isMuhurtham,
-                   isEndpoint, wrapCls, cls });
+      cells.push({ key: iso, label: d, outside: false, iso,
+                   isPast, isMuhurtham, isEndpoint, wrapCls, cls });
     }
 
     let next = 1;
     while (cells.length % 7 !== 0) {
-      cells.push({ key: `n${next}`, label: next++, outside: true, iso: null });
+      cells.push({ key: `n${next}`, label: next++, outside: true });
     }
 
     const ws = [];
@@ -157,10 +157,8 @@ export default class DateRangeCalendar extends Component {
   get checkInLabel()  { return this.lang === 'ta' ? 'நுழைவு தேதி'   : 'Check-in'; }
   get checkOutLabel() { return this.lang === 'ta' ? 'வெளியேறு தேதி' : 'Check-out'; }
   get selectHint()    { return this.lang === 'ta' ? 'தேர்வு செய்யவும்' : 'Select date'; }
-
   get checkInDisplay()  { return fmtDate(this.checkIn)  || this.selectHint; }
   get checkOutDisplay() { return fmtDate(this.checkOut) || this.selectHint; }
-
   get legendMuhurtham() { return this.lang === 'ta' ? 'முஹூர்த்தம் நாள்' : 'Muhurtham date'; }
   get legendToday()     { return this.lang === 'ta' ? 'இன்று' : 'Today'; }
 
@@ -175,12 +173,16 @@ export default class DateRangeCalendar extends Component {
     else this.viewMonth += 1;
   }
 
-  // Receives the ISO string directly — avoids stale cell-object captures
-  @action pickIso(iso) {
-    if (!iso || iso < this.min) return;
+  // Read ISO from data-date attribute — avoids any fn/closure capture issues
+  @action onCellClick(event) {
+    const iso = event.currentTarget.getAttribute('data-date');
+    if (!iso) return;
+    const min = this.min;
+    if (iso < min) return;
+
     const ci = this.checkIn;
     const co = this.checkOut;
-    this._hoverIso = null;
+    this.hoverIso = null;
 
     if (!ci || (ci && co)) {
       this.args.onChange?.({ checkIn: iso, checkOut: '' });
@@ -191,20 +193,27 @@ export default class DateRangeCalendar extends Component {
     }
   }
 
-  @action hoverIso(iso) {
-    if (!iso || iso < this.min) { this._hoverIso = null; return; }
+  @action onCellHover(event) {
+    const iso = event.currentTarget.getAttribute('data-date');
+    if (!iso) return;
     const ci = this.checkIn;
     const co = this.checkOut;
     if (ci && !co && iso > ci) {
-      this._hoverIso = iso;
+      this.hoverIso = iso;
     } else {
-      this._hoverIso = null;
+      this.hoverIso = null;
     }
   }
 
-  @action clearHover() { this._hoverIso = null; }
+  @action clearHover() { this.hoverIso = null; }
 
   <template>
+    <style>
+      .range-start-bg { background: linear-gradient(to right, transparent 50%, rgb(255 228 230) 50%); }
+      .range-end-bg   { background: linear-gradient(to right, rgb(255 228 230) 50%, transparent 50%); }
+      .hover-end-bg   { background: linear-gradient(to right, rgb(255 241 242) 50%, transparent 50%); }
+    </style>
+
     <div class="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
 
       {{! Check-in / Check-out header }}
@@ -267,9 +276,10 @@ export default class DateRangeCalendar extends Component {
                 <div class={{cell.wrapCls}}>
                   <button
                     type="button"
+                    data-date={{cell.iso}}
                     class={{cell.cls}}
-                    {{on "click" (fn this.pickIso cell.iso)}}
-                    {{on "mouseenter" (fn this.hoverIso cell.iso)}}
+                    {{on "click" this.onCellClick}}
+                    {{on "mouseenter" this.onCellHover}}
                   >
                     <span class="leading-none">{{cell.label}}</span>
                     {{#if cell.isMuhurtham}}
