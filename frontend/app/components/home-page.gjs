@@ -102,7 +102,7 @@ export default class HomePage extends Component {
   @service auth;
   @service language;
 
-  @tracked galleryImages = [];
+  @tracked _galleryItems = [];
 
   constructor(owner, args) {
     super(owner, args);
@@ -113,19 +113,22 @@ export default class HomePage extends Component {
     try {
       const res = await fetch(apiUrl('/api/gallery'));
       if (res.ok) {
-        const items = await res.json();
-        this.galleryImages = items
-          .filter(i => i.mediaType === 'IMAGE')
-          .slice(0, 6)
-          .map(i => ({ src: apiUrl('/api/media/' + i.filename), title: i.title || '' }));
+        const data = await res.json();
+        this._galleryItems = data.filter(i => i.mediaType === 'IMAGE' && i.filename);
       }
     } catch (_) {}
   }
 
-  get t()          { return T[this.language.lang]; }
-  get heroImage()  { return this.galleryImages[0]?.src || null; }
-  get previewImgs(){ return this.galleryImages.slice(0, 6); }
-  get hasGallery() { return this.galleryImages.length > 0; }
+  get t()         { return T[this.language.lang]; }
+  _imgSrc(idx)    { const it = this._galleryItems[idx]; return it ? apiUrl('/api/media/' + it.filename) : null; }
+  get heroImage() { return this._imgSrc(0); }
+  get gi0()       { return this._imgSrc(0); }
+  get gi1()       { return this._imgSrc(1); }
+  get gi2()       { return this._imgSrc(2); }
+  get gi3()       { return this._imgSrc(3); }
+  get gi4()       { return this._imgSrc(4); }
+  get gi5()       { return this._imgSrc(5); }
+  get hasGallery(){ return this._galleryItems.length >= 3; }
 
   <template>
     <div class="animate-slide-up">
@@ -268,65 +271,65 @@ export default class HomePage extends Component {
       </section>
 
       {{! ── AMENITIES ── }}
-      <section class="mb-12 bg-stone-900 rounded-2xl px-6 py-10">
-        <div class="text-center mb-8">
-          <p class="text-xs font-bold uppercase tracking-widest text-rose-400 mb-1">Facilities</p>
-          <h2 class="text-2xl sm:text-3xl font-bold text-white">{{this.t.amenitiesTitle}}</h2>
+      <section class="mb-12">
+        <div class="text-center mb-6">
+          <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-1">Facilities</p>
+          <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">{{this.t.amenitiesTitle}}</h2>
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-          <div class="flex items-start gap-4 rounded-xl bg-white/5 border border-white/10 p-4">
-            <div class="h-10 w-10 rounded-lg bg-rose-600/20 flex items-center justify-center shrink-0">
-              <svg class="h-5 w-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+            <div class="h-12 w-12 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
+              <svg class="h-6 w-6 text-rose-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
               </svg>
             </div>
-            <div><p class="font-semibold text-white">{{this.t.am1}}</p><p class="text-sm text-white/60 mt-0.5">{{this.t.am1d}}</p></div>
+            <div><p class="font-semibold text-stone-800">{{this.t.am1}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am1d}}</p></div>
           </div>
 
-          <div class="flex items-start gap-4 rounded-xl bg-white/5 border border-white/10 p-4">
-            <div class="h-10 w-10 rounded-lg bg-rose-600/20 flex items-center justify-center shrink-0">
-              <svg class="h-5 w-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+            <div class="h-12 w-12 rounded-xl bg-pink-100 flex items-center justify-center shrink-0">
+              <svg class="h-6 w-6 text-pink-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
               </svg>
             </div>
-            <div><p class="font-semibold text-white">{{this.t.am2}}</p><p class="text-sm text-white/60 mt-0.5">{{this.t.am2d}}</p></div>
+            <div><p class="font-semibold text-stone-800">{{this.t.am2}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am2d}}</p></div>
           </div>
 
-          <div class="flex items-start gap-4 rounded-xl bg-white/5 border border-white/10 p-4">
-            <div class="h-10 w-10 rounded-lg bg-rose-600/20 flex items-center justify-center shrink-0">
-              <svg class="h-5 w-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+            <div class="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+              <svg class="h-6 w-6 text-amber-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5"/>
               </svg>
             </div>
-            <div><p class="font-semibold text-white">{{this.t.am3}}</p><p class="text-sm text-white/60 mt-0.5">{{this.t.am3d}}</p></div>
+            <div><p class="font-semibold text-stone-800">{{this.t.am3}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am3d}}</p></div>
           </div>
 
-          <div class="flex items-start gap-4 rounded-xl bg-white/5 border border-white/10 p-4">
-            <div class="h-10 w-10 rounded-lg bg-rose-600/20 flex items-center justify-center shrink-0">
-              <svg class="h-5 w-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+            <div class="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+              <svg class="h-6 w-6 text-purple-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
               </svg>
             </div>
-            <div><p class="font-semibold text-white">{{this.t.am4}}</p><p class="text-sm text-white/60 mt-0.5">{{this.t.am4d}}</p></div>
+            <div><p class="font-semibold text-stone-800">{{this.t.am4}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am4d}}</p></div>
           </div>
 
-          <div class="flex items-start gap-4 rounded-xl bg-white/5 border border-white/10 p-4">
-            <div class="h-10 w-10 rounded-lg bg-rose-600/20 flex items-center justify-center shrink-0">
-              <svg class="h-5 w-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+            <div class="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+              <svg class="h-6 w-6 text-orange-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/>
               </svg>
             </div>
-            <div><p class="font-semibold text-white">{{this.t.am5}}</p><p class="text-sm text-white/60 mt-0.5">{{this.t.am5d}}</p></div>
+            <div><p class="font-semibold text-stone-800">{{this.t.am5}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am5d}}</p></div>
           </div>
 
-          <div class="flex items-start gap-4 rounded-xl bg-white/5 border border-white/10 p-4">
-            <div class="h-10 w-10 rounded-lg bg-rose-600/20 flex items-center justify-center shrink-0">
-              <svg class="h-5 w-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <div class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-rose-200 transition-all">
+            <div class="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+              <svg class="h-6 w-6 text-blue-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
               </svg>
             </div>
-            <div><p class="font-semibold text-white">{{this.t.am6}}</p><p class="text-sm text-white/60 mt-0.5">{{this.t.am6d}}</p></div>
+            <div><p class="font-semibold text-stone-800">{{this.t.am6}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am6d}}</p></div>
           </div>
 
         </div>
@@ -384,11 +387,12 @@ export default class HomePage extends Component {
             </LinkTo>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {{#each this.previewImgs as |img|}}
-              <div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm">
-                <img src={{img.src}} alt={{img.title}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy" />
-              </div>
-            {{/each}}
+            {{#if this.gi0}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi0}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
+            {{#if this.gi1}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi1}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
+            {{#if this.gi2}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi2}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
+            {{#if this.gi3}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi3}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
+            {{#if this.gi4}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi4}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
+            {{#if this.gi5}}<div class="rounded-xl overflow-hidden aspect-video bg-stone-100 shadow-sm"><img src={{this.gi5}} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" /></div>{{/if}}
           </div>
         </section>
       {{/if}}
