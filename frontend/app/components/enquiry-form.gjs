@@ -65,8 +65,19 @@ const T = {
     multiDayEntry:      'Entry 3:00 PM day before start · Exit 2:00 PM on last day',
     perDay:             'per day',
     totalRent:          'Total hall rent',
+    hallRent:           'Hall rent',
     secDeposit:         'Security deposit (refundable)',
     totalAdvance:       'Total advance payable',
+    entryLabel:         'Entry',
+    exitLabel:          'Exit',
+    dayBeforeEvent:     'Day before event',
+    eventDayLabel:      'Event day',
+    lastDayLabel:       'Last day',
+    daysBadge:          'Days',
+    multiDayOption:              'Multiple days — ₹32,000 / day',
+    checkInDate:                 'Check-in date',
+    multiDayFunctionLabel:       'Event / Function type',
+    multiDayFunctionPlaceholder: 'e.g. Wedding Anniversary, Birthday, House Warming…',
     halfDayTitle:       'Half Day — Select your time slot',
     halfDayRate:        'Rate: ₹23,000 · Pick any 6–8 hour window using the clocks below',
     timeSlot:           'Time slot',
@@ -94,8 +105,9 @@ const T = {
     notifyWA:           'Notify the hall on WhatsApp',
     downloadReceipt:    'Download Receipt',
     rentalLabels: {
-      FULL_DAY: 'full day rental',
-      HALF_DAY: 'half day rental',
+      FULL_DAY:  'full day rental',
+      MULTI_DAY: 'multiple days rental',
+      HALF_DAY:  'half day rental',
       HOURLY:   'hourly rental',
     },
   },
@@ -131,8 +143,19 @@ const T = {
     multiDayEntry:      'நுழைவு தொடக்கத்திற்கு முந்தைய நாள் மாலை 3:00 · வெளியேறு கடைசி நாளில் பிற்பகல் 2:00',
     perDay:             'நாளுக்கு',
     totalRent:          'மொத்த மண்டப வாடகை',
+    hallRent:           'மண்டப வாடகை',
     secDeposit:         'பாதுகாப்பு தொகை (திரும்பக்கிடைக்கும்)',
     totalAdvance:       'செலுத்த வேண்டிய மொத்த முன்பணம்',
+    entryLabel:         'நுழைவு',
+    exitLabel:          'வெளியேறு',
+    dayBeforeEvent:     'நிகழ்வுக்கு முந்தைய நாள்',
+    eventDayLabel:      'நிகழ்வு நாள்',
+    lastDayLabel:       'கடைசி நாள்',
+    daysBadge:          'நாட்கள்',
+    multiDayOption:              'பல நாட்கள் — ₹32,000 / நாள்',
+    checkInDate:                 'தொடக்க தேதி',
+    multiDayFunctionLabel:       'நிகழ்வு வகை',
+    multiDayFunctionPlaceholder: 'உ.தா. திருமண ஆண்டு விழா, பிறந்தநாள், வீடு வாழ்த்து…',
     halfDayTitle:       'அரை நாள் — உங்கள் நேர இடைவெளியை தேர்வு செய்யுங்கள்',
     halfDayRate:        'கட்டணம்: ₹23,000 · கீழே உள்ள கடிகாரங்களில் 6–8 மணி நேர சாளரத்தை தேர்வு செய்யுங்கள்',
     timeSlot:           'நேர இடைவெளி',
@@ -160,9 +183,10 @@ const T = {
     notifyWA:           'WhatsApp-ல் மண்டபத்தை தெரியப்படுத்துங்கள்',
     downloadReceipt:    'ரசீதை பதிவிறக்கவும்',
     rentalLabels: {
-      FULL_DAY: 'முழு நாள் வாடகை',
-      HALF_DAY: 'அரை நாள் வாடகை',
-      HOURLY:   'மணிநேர வாடகை',
+      FULL_DAY:  'முழு நாள் வாடகை',
+      MULTI_DAY: 'பல நாட்கள் வாடகை',
+      HALF_DAY:  'அரை நாள் வாடகை',
+      HOURLY:    'மணிநேர வாடகை',
     },
   },
 };
@@ -191,9 +215,10 @@ export default class EnquiryForm extends Component {
   @tracked isMuhurtham        = false;
   @tracked bookedSlots        = [];
   @tracked availabilityLoading= false;
-  @tracked rentalType         = '';
-  @tracked selectedDate       = '';
-  @tracked endDate            = '';
+  @tracked rentalType           = '';
+  @tracked selectedDate         = '';
+  @tracked endDate              = '';
+  @tracked multiDayFunctionDesc = '';
 
   constructor(owner, args) {
     super(owner, args);
@@ -250,16 +275,30 @@ export default class EnquiryForm extends Component {
   }
 
   get isMarriage()      { return this.rentalType === 'FULL_DAY'; }
+  get isMultiDayMode()  { return this.rentalType === 'MULTI_DAY'; }
   get isHalfDay()       { return this.rentalType === 'HALF_DAY'; }
   get showTimePickers() { return this.rentalType === 'HALF_DAY' || this.rentalType === 'HOURLY'; }
   get showHourlyHint()  { return this.rentalType === 'HOURLY'; }
 
+  get multiDayPickerCls() {
+    return this.rentalType === 'MULTI_DAY'
+      ? 'space-y-4 max-h-[900px] opacity-100 transition-all duration-500 ease-out'
+      : 'max-h-0 opacity-0 overflow-hidden pointer-events-none transition-all duration-300 ease-in';
+  }
+  get singleDatePickerCls() {
+    const show = this.rentalType !== '' && this.rentalType !== 'MULTI_DAY';
+    return show
+      ? 'max-h-[500px] opacity-100 transition-all duration-500 ease-out'
+      : 'max-h-0 opacity-0 overflow-hidden pointer-events-none transition-all duration-300 ease-in';
+  }
+
   get numDays() {
+    if (this.rentalType !== 'MULTI_DAY') return 1;
     if (!this.selectedDate || !this.endDate || this.endDate <= this.selectedDate) return 1;
     const ms = new Date(this.endDate) - new Date(this.selectedDate);
     return Math.round(ms / 86400000) + 1;
   }
-  get isMultiDay()          { return this.numDays > 1; }
+  get isMultiDay() { return this.rentalType === 'MULTI_DAY' && this.numDays > 1; }
   get totalRentFormatted()  { return (this.numDays * 32000).toLocaleString('en-IN'); }
   get totalAdvFormatted()   { return (this.numDays * 35000).toLocaleString('en-IN'); }
 
@@ -309,6 +348,7 @@ export default class EnquiryForm extends Component {
   selectRental(event) {
     this.rentalType = event.target.value;
     this.endDate = this.selectedDate;
+    this.multiDayFunctionDesc = '';
     const form = event.target.form;
     if (form) {
       const ft = form.elements.namedItem('functionType');
@@ -318,6 +358,11 @@ export default class EnquiryForm extends Component {
       const et = form.elements.namedItem('endTime');
       if (et) et.value = '';
     }
+  }
+
+  @action
+  onMultiDayFunctionInput(event) {
+    this.multiDayFunctionDesc = event.target.value;
   }
 
   @action
@@ -368,42 +413,67 @@ export default class EnquiryForm extends Component {
     event.preventDefault();
     this.error = null;
 
+    const lang  = this.language.lang;
+    const isMD  = this.rentalType === 'MULTI_DAY';
+    const fd    = new FormData(event.currentTarget);
+
+    // Build shared helpers for MULTI_DAY message combining
+    const customDesc = isMD ? this.multiDayFunctionDesc.trim() : '';
+    const userMsg    = (fd.get('message') || '').trim();
+    const message    = customDesc
+      ? (userMsg ? `Event: ${customDesc}\n${userMsg}` : `Event: ${customDesc}`)
+      : (userMsg || null);
+
     // Require login before submitting — capture form data so we can auto-submit after OTP
     if (!this.auth.isLoggedIn) {
-      const fd = new FormData(event.currentTarget);
       this._pendingPayload = {
         customerName: fd.get('customerName'),
         eventDate:    this.selectedDate,
-        endDate:      (this.rentalType === 'FULL_DAY' && this.endDate && this.endDate !== this.selectedDate) ? this.endDate : null,
-        rentalType:   fd.get('rentalType'),
-        functionType: fd.get('functionType'),
+        endDate:      isMD ? this.endDate : null,
+        rentalType:   isMD ? 'FULL_DAY' : fd.get('rentalType'),
+        functionType: isMD ? 'OTHER'    : fd.get('functionType'),
         startTime:    fd.get('startTime') || null,
         endTime:      fd.get('endTime')   || null,
-        message:      fd.get('message'),
+        message,
       };
       this.showLoginPrompt = true;
       return;
     }
 
-    if (!this.selectedDate) {
-      this.error = this.language.lang === 'ta' ? 'நிகழ்வு தேதியை தேர்வு செய்யுங்கள்.' : 'Please select an event date.';
-      return;
+    // MULTI_DAY-specific validation
+    if (isMD) {
+      if (!this.selectedDate) {
+        this.error = lang === 'ta' ? 'தொடக்க தேதியை தேர்வு செய்யுங்கள்.' : 'Please select a check-in date.';
+        return;
+      }
+      if (!this.endDate || this.endDate === this.selectedDate) {
+        this.error = lang === 'ta' ? 'வெளியேறும் தேதியை தேர்வு செய்யுங்கள்.' : 'Please select a check-out date (different from check-in).';
+        return;
+      }
+      if (!customDesc) {
+        this.error = lang === 'ta' ? 'நிகழ்வு வகையை உள்ளிடுங்கள்.' : 'Please describe your event or function.';
+        return;
+      }
+    } else {
+      if (!this.selectedDate) {
+        this.error = lang === 'ta' ? 'நிகழ்வு தேதியை தேர்வு செய்யுங்கள்.' : 'Please select an event date.';
+        return;
+      }
     }
 
-    const fd = new FormData(event.currentTarget);
     const payload = {
       customerName: fd.get('customerName'),
       mobile:       this.auth.user?.mobile,
       eventDate:    this.selectedDate,
-      endDate:      (this.rentalType === 'FULL_DAY' && this.endDate && this.endDate !== this.selectedDate) ? this.endDate : null,
-      rentalType:   fd.get('rentalType'),
-      functionType: fd.get('functionType'),
+      endDate:      isMD ? this.endDate : null,
+      rentalType:   isMD ? 'FULL_DAY' : fd.get('rentalType'),
+      functionType: isMD ? 'OTHER'    : fd.get('functionType'),
       startTime:    fd.get('startTime') || null,
       endTime:      fd.get('endTime')   || null,
-      message:      fd.get('message'),
+      message,
     };
 
-    if (payload.rentalType !== 'FULL_DAY' && (!payload.startTime || !payload.endTime)) {
+    if (!isMD && payload.rentalType !== 'FULL_DAY' && (!payload.startTime || !payload.endTime)) {
       this.error = this.t.timesRequired;
       return;
     }
@@ -476,72 +546,13 @@ export default class EnquiryForm extends Component {
           </div>
         {{/if}}
 
-        {{! Event date }}
-        <div>
-          <label class="block text-sm font-medium text-stone-700 mb-1.5">{{this.t.eventDate}}</label>
-          <DatePickerCalendar
-            @value={{this.selectedDate}}
-            @min={{this.todayIso}}
-            @onChange={{this.onDateChange}}
-          />
-          {{#if this.isMuhurtham}}
-            <p class="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-yellow-700 animate-fade-in">
-              <svg class="h-3.5 w-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 3l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L12 14l-4 2.5 1.5-4.5L6 9.5h4.5z"/>
-              </svg>
-              {{this.t.muhurthamBadge}}
-            </p>
-            <div class="mt-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-xs animate-fade-in">
-              <p class="font-semibold text-yellow-800">{{this.t.muhurthamTitle}}</p>
-              <p class="mt-0.5 text-yellow-700">{{this.t.muhurthamPolicy}}</p>
-            </div>
-          {{/if}}
-          {{#if this.availabilityLoading}}
-            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-stone-400">
-              <svg class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-              {{this.t.checkingAvail}}
-            </p>
-          {{else if this.availabilityIsGood}}
-            <p class="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-green-700 animate-fade-in">
-              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              {{this.t.available}}
-            </p>
-          {{else if this.availabilityIsPending}}
-            <p class="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700 animate-fade-in">
-              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-              </svg>
-              {{this.t.pendingEnquiry}}
-            </p>
-          {{else if this.availabilityIsBlocked}}
-            <p class="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-red-700 animate-fade-in">
-              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              {{this.t.unavailable}}
-            </p>
-          {{/if}}
-          {{#if this.slotSuggestion}}
-            <div class="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 animate-fade-in">
-              <p class="font-semibold">{{this.t.bookedNote}} {{this.slotSuggestion.taken}}</p>
-              {{#if this.slotSuggestion.nextAvail}}
-                <p class="mt-0.5">{{this.t.nextSlotFrom}} {{this.slotSuggestion.nextAvail}} — {{this.t.gapNote}}</p>
-              {{/if}}
-            </div>
-          {{/if}}
-        </div>
-
-        {{! Rental type }}
+        {{! Rental type — first }}
         <div>
           <label class="block text-sm font-medium text-stone-700">{{this.t.rentalType}}</label>
           <select name="rentalType" required class={{INPUT_CLS}} {{on "change" this.selectRental}}>
             <option value="">{{this.t.selectRental}}</option>
             <option value="FULL_DAY">{{this.t.fullDayOption}}</option>
+            <option value="MULTI_DAY">{{this.t.multiDayOption}}</option>
             <option value="HALF_DAY">{{this.t.halfDayOption}}</option>
             {{#unless this.isMuhurtham}}
               <option value="HOURLY">{{this.t.hourlyOption}}</option>
@@ -557,60 +568,190 @@ export default class EnquiryForm extends Component {
           {{/if}}
         </div>
 
-        {{! Time info / pickers }}
-        {{#if this.isMarriage}}
-          {{! End date picker for multi-day bookings }}
-          {{#if this.selectedDate}}
-            <div>
-              <label class="block text-sm font-medium text-stone-700 mb-1.5">
-                {{this.t.checkOutDate}}
-                <span class="ml-1 font-normal text-stone-400 text-xs">{{this.t.singleDayHint}}</span>
-              </label>
-              <DatePickerCalendar
-                @value={{this.endDate}}
-                @min={{this.selectedDate}}
-                @onChange={{this.onEndDateChange}}
-              />
-              {{#if this.isMultiDay}}
-                <div class="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 animate-fade-in">
-                  <p class="text-xs font-bold text-rose-700 uppercase tracking-wide mb-2">
-                    {{this.t.multiDayBadge}} — {{this.numDays}} days
-                  </p>
-                  <p class="text-xs text-rose-600 mb-2">{{this.t.multiDayEntry}}</p>
-                  <div class="space-y-1 text-xs">
-                    <div class="flex justify-between text-stone-700">
-                      <span>{{this.numDays}} × ₹32,000 {{this.t.perDay}}</span>
-                      <span class="font-semibold">₹{{this.totalRentFormatted}}</span>
-                    </div>
-                    <div class="flex justify-between text-stone-500">
-                      <span>{{this.t.secDeposit}}</span>
-                      <span>₹3,000</span>
-                    </div>
-                    <div class="flex justify-between font-bold text-rose-800 border-t border-rose-200 pt-1 mt-1">
-                      <span>{{this.t.totalAdvance}}</span>
-                      <span>₹{{this.totalAdvFormatted}}</span>
-                    </div>
-                  </div>
+        {{! Multi-day date pickers (CSS transition) }}
+        <div class={{this.multiDayPickerCls}}>
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-1.5">{{this.t.checkInDate}}</label>
+            <DatePickerCalendar
+              @value={{this.selectedDate}}
+              @min={{this.todayIso}}
+              @onChange={{this.onDateChange}}
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-1.5">
+              {{this.t.checkOutDate}}
+              <span class="ml-1 font-normal text-stone-400 text-xs">{{this.t.singleDayHint}}</span>
+            </label>
+            <DatePickerCalendar
+              @value={{this.endDate}}
+              @min={{this.selectedDate}}
+              @onChange={{this.onEndDateChange}}
+            />
+          </div>
+          {{#if this.isMultiDay}}
+            <div class="rounded-xl border border-rose-200 bg-white shadow-sm overflow-hidden animate-fade-in">
+              <div class="flex items-center justify-between px-4 py-3 bg-rose-700">
+                <div class="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-rose-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span class="text-sm font-semibold text-white">{{this.t.multiDayBadge}}</span>
                 </div>
+                <span class="text-xs font-bold bg-white/20 text-white rounded-full px-2.5 py-0.5">{{this.numDays}} {{this.t.daysBadge}}</span>
+              </div>
+              <div class="grid grid-cols-2 divide-x divide-stone-100 border-b border-stone-100">
+                <div class="px-4 py-3 text-center">
+                  <p class="text-[10px] font-semibold uppercase tracking-widest text-stone-400 mb-1">{{this.t.entryLabel}}</p>
+                  <p class="text-xl font-bold text-rose-700">3:00 PM</p>
+                  <p class="text-xs text-stone-500 mt-0.5">{{this.t.dayBeforeEvent}}</p>
+                </div>
+                <div class="px-4 py-3 text-center">
+                  <p class="text-[10px] font-semibold uppercase tracking-widest text-stone-400 mb-1">{{this.t.exitLabel}}</p>
+                  <p class="text-xl font-bold text-stone-700">2:00 PM</p>
+                  <p class="text-xs text-stone-500 mt-0.5">{{this.t.lastDayLabel}}</p>
+                </div>
+              </div>
+              <div class="px-4 py-3 space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-stone-500">{{this.numDays}} × ₹32,000 {{this.t.perDay}}</span>
+                  <span class="font-medium text-stone-800">₹{{this.totalRentFormatted}}</span>
+                </div>
+                <div class="flex justify-between text-xs text-stone-400">
+                  <span>{{this.t.secDeposit}}</span>
+                  <span>+ ₹3,000</span>
+                </div>
+                <div class="flex justify-between font-bold border-t border-stone-100 pt-2">
+                  <span class="text-stone-700">{{this.t.totalAdvance}}</span>
+                  <span class="text-rose-700 text-base">₹{{this.totalAdvFormatted}}</span>
+                </div>
+              </div>
+              <div class="border-t border-stone-100 px-4 py-2.5 space-y-1.5 bg-stone-50">
+                <div class="flex gap-2 items-start text-xs text-stone-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <span>{{this.t.fullDayEarlyKey}}</span>
+                </div>
+                <div class="flex gap-2 items-start text-xs text-stone-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-stone-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/></svg>
+                  <span>{{this.t.fullDayCancel}}</span>
+                </div>
+              </div>
+            </div>
+          {{/if}}
+        </div>
+
+        {{! Single date picker (CSS transition) }}
+        <div class={{this.singleDatePickerCls}}>
+          <label class="block text-sm font-medium text-stone-700 mb-1.5">{{this.t.eventDate}}</label>
+          <DatePickerCalendar
+            @value={{this.selectedDate}}
+            @min={{this.todayIso}}
+            @onChange={{this.onDateChange}}
+          />
+        </div>
+
+        {{! Availability + Muhurtham info (shown after any date is selected) }}
+        {{#if this.selectedDate}}
+          {{#if this.isMuhurtham}}
+            <p class="flex items-center gap-1.5 text-xs font-semibold text-yellow-700 animate-fade-in">
+              <svg class="h-3.5 w-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 3l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L12 14l-4 2.5 1.5-4.5L6 9.5h4.5z"/>
+              </svg>
+              {{this.t.muhurthamBadge}}
+            </p>
+            <div class="rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-xs animate-fade-in">
+              <p class="font-semibold text-yellow-800">{{this.t.muhurthamTitle}}</p>
+              <p class="mt-0.5 text-yellow-700">{{this.t.muhurthamPolicy}}</p>
+            </div>
+          {{/if}}
+          {{#if this.availabilityLoading}}
+            <p class="flex items-center gap-1.5 text-xs text-stone-400">
+              <svg class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              {{this.t.checkingAvail}}
+            </p>
+          {{else if this.availabilityIsGood}}
+            <p class="flex items-center gap-1.5 text-xs font-medium text-green-700 animate-fade-in">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              {{this.t.available}}
+            </p>
+          {{else if this.availabilityIsPending}}
+            <p class="flex items-center gap-1.5 text-xs font-medium text-amber-700 animate-fade-in">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+              </svg>
+              {{this.t.pendingEnquiry}}
+            </p>
+          {{else if this.availabilityIsBlocked}}
+            <p class="flex items-center gap-1.5 text-xs font-medium text-red-700 animate-fade-in">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              {{this.t.unavailable}}
+            </p>
+          {{/if}}
+          {{#if this.slotSuggestion}}
+            <div class="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 animate-fade-in">
+              <p class="font-semibold">{{this.t.bookedNote}} {{this.slotSuggestion.taken}}</p>
+              {{#if this.slotSuggestion.nextAvail}}
+                <p class="mt-0.5">{{this.t.nextSlotFrom}} {{this.slotSuggestion.nextAvail}} — {{this.t.gapNote}}</p>
               {{/if}}
             </div>
           {{/if}}
+        {{/if}}
 
-          <div class="rounded-lg border border-rose-100 bg-rose-50 px-4 py-3 text-sm space-y-2">
-            <p class="font-medium text-rose-800">{{this.t.fullDayAutoTitle}}</p>
-            <div class="text-xs text-rose-700 space-y-1">
-              {{#if this.isMultiDay}}
-                <p>{{this.t.multiDayEntry}}</p>
-                <p>{{this.t.totalAdvance}}: ₹{{this.totalAdvFormatted}} ({{this.numDays}} × ₹32,000 + ₹3,000 security)</p>
-              {{else}}
-                <p>{{this.t.fullDayEntry}}</p>
-                <p>{{this.t.fullDayDeposit}}</p>
-              {{/if}}
-              <p>{{this.t.fullDayEarlyKey}}</p>
-              <p>{{this.t.fullDayCancel}}</p>
+        {{! Full Day info card (single-day marriage) }}
+        {{#if this.isMarriage}}
+          <div class="rounded-xl border border-rose-200 bg-white shadow-sm overflow-hidden">
+            <div class="flex items-center px-4 py-3 bg-rose-700">
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-rose-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="text-sm font-semibold text-white">{{this.t.fullDayAutoTitle}}</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 divide-x divide-stone-100 border-b border-stone-100">
+              <div class="px-4 py-3 text-center">
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-stone-400 mb-1">{{this.t.entryLabel}}</p>
+                <p class="text-xl font-bold text-rose-700">3:00 PM</p>
+                <p class="text-xs text-stone-500 mt-0.5">{{this.t.dayBeforeEvent}}</p>
+              </div>
+              <div class="px-4 py-3 text-center">
+                <p class="text-[10px] font-semibold uppercase tracking-widest text-stone-400 mb-1">{{this.t.exitLabel}}</p>
+                <p class="text-xl font-bold text-stone-700">2:00 PM</p>
+                <p class="text-xs text-stone-500 mt-0.5">{{this.t.eventDayLabel}}</p>
+              </div>
+            </div>
+            <div class="px-4 py-3 space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-stone-500">{{this.t.hallRent}}</span>
+                <span class="font-medium text-stone-800">₹32,000</span>
+              </div>
+              <div class="flex justify-between text-xs text-stone-400">
+                <span>{{this.t.secDeposit}}</span>
+                <span>+ ₹3,000</span>
+              </div>
+              <div class="flex justify-between font-bold border-t border-stone-100 pt-2">
+                <span class="text-stone-700">{{this.t.totalAdvance}}</span>
+                <span class="text-rose-700 text-base">₹35,000</span>
+              </div>
+            </div>
+            <div class="border-t border-stone-100 px-4 py-2.5 space-y-1.5 bg-stone-50">
+              <div class="flex gap-2 items-start text-xs text-stone-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span>{{this.t.fullDayEarlyKey}}</span>
+              </div>
+              <div class="flex gap-2 items-start text-xs text-stone-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-stone-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/></svg>
+                <span>{{this.t.fullDayCancel}}</span>
+              </div>
             </div>
           </div>
-        {{else if this.showTimePickers}}
+        {{/if}}
+
+        {{! Time pickers (half day / hourly) }}
+        {{#if this.showTimePickers}}
           {{#if this.isHalfDay}}
             <div class="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm space-y-1">
               <p class="font-medium text-blue-800">{{this.t.halfDayTitle}}</p>
@@ -637,30 +778,45 @@ export default class EnquiryForm extends Component {
 
         {{! Function type }}
         <div>
-          <label class="block text-sm font-medium {{if this.functionTypeDisabled 'text-stone-400' 'text-stone-700'}}">
-            {{this.t.functionType}}
-          </label>
-
-          {{#if this.functionTypeDisabled}}
-            <div class="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-400 flex items-center gap-2">
-              <svg class="h-4 w-4 shrink-0 text-stone-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
-              </svg>
-              {{this.t.selectRentalFirst}}
-            </div>
-            <select name="functionType" required class="sr-only" tabindex="-1" aria-hidden="true">
-              <option value="">placeholder</option>
+          {{#if this.isMultiDayMode}}
+            <label class="block text-sm font-medium text-stone-700">{{this.t.multiDayFunctionLabel}}</label>
+            <input
+              name="multiDayFunctionDesc"
+              type="text"
+              required
+              placeholder={{this.t.multiDayFunctionPlaceholder}}
+              class={{INPUT_CLS}}
+              value={{this.multiDayFunctionDesc}}
+              {{on "input" this.onMultiDayFunctionInput}}
+            />
+            <select name="functionType" class="sr-only" tabindex="-1" aria-hidden="true">
+              <option value="OTHER" selected>OTHER</option>
             </select>
           {{else}}
-            <p class="mt-1 mb-1 text-xs text-stone-400">
-              {{this.t.availFor}} {{this.rentalTypeLabel}}
-            </p>
-            <select name="functionType" required class={{INPUT_CLS}}>
-              <option value="">{{this.t.selectFunction}}</option>
-              {{#each this.functionTypeOptions as |opt|}}
-                <option value={{opt.value}}>{{opt.label}}</option>
-              {{/each}}
-            </select>
+            <label class="block text-sm font-medium {{if this.functionTypeDisabled 'text-stone-400' 'text-stone-700'}}">
+              {{this.t.functionType}}
+            </label>
+            {{#if this.functionTypeDisabled}}
+              <div class="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-400 flex items-center gap-2">
+                <svg class="h-4 w-4 shrink-0 text-stone-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                </svg>
+                {{this.t.selectRentalFirst}}
+              </div>
+              <select name="functionType" required class="sr-only" tabindex="-1" aria-hidden="true">
+                <option value="">placeholder</option>
+              </select>
+            {{else}}
+              <p class="mt-1 mb-1 text-xs text-stone-400">
+                {{this.t.availFor}} {{this.rentalTypeLabel}}
+              </p>
+              <select name="functionType" required class={{INPUT_CLS}}>
+                <option value="">{{this.t.selectFunction}}</option>
+                {{#each this.functionTypeOptions as |opt|}}
+                  <option value={{opt.value}}>{{opt.label}}</option>
+                {{/each}}
+              </select>
+            {{/if}}
           {{/if}}
         </div>
 

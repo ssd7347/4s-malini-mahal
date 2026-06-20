@@ -30,7 +30,7 @@ const T = {
     am5: 'Kitchen',           am5d: 'Full kitchen with gas connection',
     am6: 'Parking',           am6d: 'Ample vehicle parking for all guests',
 
-    pricingTitle:  'Clear, Fixed Pricing',
+    pricingTitle:  'Clear, Transparent Pricing',
     pricingNote:   'No hidden charges. What you see is what you pay.',
     p1label: 'Full Day',   p1price: '₹32,000', p1note: 'Day before 3 PM → Next day 2 PM',
     p2label: 'Half Day',   p2price: '₹23,000', p2note: 'Morning or Evening slot',
@@ -40,7 +40,7 @@ const T = {
     viewAll:       'View Full Gallery',
 
     whyTitle:      'Why Choose Us',
-    why1: 'Transparent, fixed pricing — no last-minute surprises',
+    why1: 'Transparent pricing — no hidden charges or surprises',
     why2: 'Online booking with instant confirmation and Razorpay payment',
     why3: 'Trusted by families across Thiruthangal and Sivakasi',
     why4: 'Flexible slots — full day, half day, or hourly bookings',
@@ -74,7 +74,7 @@ const T = {
     am5: 'சமையலறை',            am5d: 'கேஸ் இணைப்புடன் கூடிய முழு சமையலறை',
     am6: 'வாகன நிறுத்துமிடம்',  am6d: 'விருந்தினர்களுக்கு போதுமான இடவசதி',
 
-    pricingTitle:  'தெளிவான, நிலையான கட்டணம்',
+    pricingTitle:  'தெளிவான, வெளிப்படையான கட்டணம்',
     pricingNote:   'மறைமுக கட்டணங்கள் இல்லை. நீங்கள் பார்ப்பதே நீங்கள் செலுத்துவது.',
     p1label: 'முழு நாள்',  p1price: '₹32,000', p1note: 'முந்தைய நாள் 3 மணி → மறுநாள் 2 மணி',
     p2label: 'அரை நாள்',  p2price: '₹23,000', p2note: 'காலை அல்லது மாலை நேரம்',
@@ -84,7 +84,7 @@ const T = {
     viewAll:       'முழு கேலரி பார்க்கவும்',
 
     whyTitle:      'எங்களை ஏன் தேர்வு செய்ய வேண்டும்',
-    why1: 'வெளிப்படையான, நிலையான கட்டணம் — கடைசி நிமிட அதிர்ச்சிகள் இல்லை',
+    why1: 'வெளிப்படையான கட்டணம் — மறைமுக கட்டணங்களோ அதிர்ச்சிகளோ இல்லை',
     why2: 'ஆன்லைன் பதிவு, உடனடி உறுதிப்படுத்தல் மற்றும் Razorpay கட்டணம்',
     why3: 'திருத்தங்கல் மற்றும் சிவகாசி குடும்பங்களால் நம்பப்படுகிறது',
     why4: 'நெகிழ்வான நேர இடைவெளிகள் — முழு நாள், அரை நாள் அல்லது மணிநேரம்',

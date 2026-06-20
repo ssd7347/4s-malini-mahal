@@ -30,7 +30,7 @@ public class EnquiryServlet extends HttpServlet {
     private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
     private static final Map<String, List<String>> FUNCTION_TYPES = Map.of(
-        "FULL_DAY",  List.of("MARRIAGE"),
+        "FULL_DAY",  List.of("MARRIAGE", "OTHER"),
         "HALF_DAY",  List.of("RECEPTION", "ENGAGEMENT", "BIRTHDAY_FUNCTION", "OTHER"),
         "HOURLY",    List.of("MEETING", "CONFERENCE", "TRAINING_SESSION", "SEMINAR",
                              "WORKSHOP", "SMALL_GATHERING", "OTHER_HOURLY")
