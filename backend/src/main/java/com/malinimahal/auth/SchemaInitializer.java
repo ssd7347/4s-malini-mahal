@@ -45,6 +45,8 @@ public class SchemaInitializer implements ServletContextListener {
         try (Connection c2 = Database.getConnection(); Statement st2 = c2.createStatement()) {
             st2.execute(
                 "DO $$ BEGIN " +
+                "  ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS end_date DATE; " +
+                "  UPDATE enquiries SET end_date = event_date WHERE end_date IS NULL; " +
                 "  ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS start_datetime TIMESTAMPTZ; " +
                 "  ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS end_datetime TIMESTAMPTZ; " +
                 "  ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS elec_units DOUBLE PRECISION; " +

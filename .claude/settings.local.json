@@ -27,7 +27,21 @@
       "Bash(/c/tools/apache-maven-3.9.16/bin/mvn -q package -DskipTests)",
       "Bash(ls -la \"C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal\\\\\" 2>&1 | head -50)",
       "Bash(/c/tools/apache-maven-3.9.16/bin/mvn -f backend/pom.xml clean package -q)",
-      "Bash(/c/tools/apache-maven-3.9.16/bin/mvn package *)"
+      "Bash(/c/tools/apache-maven-3.9.16/bin/mvn package *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(mvn -q package -DskipTests)",
+      "Bash(xargs grep -l -i \"payment\\\\|razorpay\")",
+      "Bash(curl -s -X POST http://localhost:8080/malinimahal/api/payments/create-order -H 'Content-Type: application/json' -d '{\"reference\":\"MM-INVALID\",\"paymentType\":\"ADVANCE\",\"termsVersionId\":1}')",
+      "Bash(/c/tools/apache-maven-3.9.16/bin/mvn clean *)",
+      "Bash(powershell -Command \"Get-Content 'C:\\\\tools\\\\apache-tomcat-10.1.55\\\\logs\\\\catalina.out' -Tail 30\")",
+      "Read(//c/Users/sivas/AppData/Local/Microsoft/WinGet/**)",
+      "Read(//c/Users/sivas/**)",
+      "WebFetch(domain:www.vrtm.in)",
+      "Bash(curl -s \"http://localhost:8080/malinimahal/api/gallery\")",
+      "Bash(python3 -c \"import sys,json; items=json.load\\(sys.stdin\\); print\\(f'Total: {len\\(items\\)}'\\); [print\\(f'  id={i.get\\(\\\\\"id\\\\\"\\)} mediaType={i.get\\(\\\\\"mediaType\\\\\"\\)} filename={i.get\\(\\\\\"filename\\\\\"\\)} title={i.get\\(\\\\\"title\\\\\"\\)}'\\) for i in items]\")",
+      "PowerShell($r = Invoke-RestMethod \"http://localhost:8080/malinimahal/api/gallery\"; $r | ForEach-Object { \"id=$\\($_.id\\) mediaType=$\\($_.mediaType\\) filename=$\\($_.filename\\) title=$\\($_.title\\)\" })",
+      "Bash(xargs grep -l \"price\\\\|Price\\\\|PRICE\")"
     ]
   }
 }

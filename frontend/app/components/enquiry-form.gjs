@@ -59,6 +59,14 @@ const T = {
     fullDayDeposit:     'Advance deposit: ₹35,000  (₹32,000 rent + ₹3,000 security refundable)',
     fullDayEarlyKey:    'Early key (before 3 PM on setup day): extra ₹5,000 charge (T&C Rule 2)',
     fullDayCancel:      'Cancellation: full refund for non-muhurtham dates; 0% refund for muhurtham dates',
+    checkOutDate:       'Check-out date',
+    singleDayHint:      'Leave same as start date for a single-day booking',
+    multiDayBadge:      'Multi-day booking',
+    multiDayEntry:      'Entry 3:00 PM day before start · Exit 2:00 PM on last day',
+    perDay:             'per day',
+    totalRent:          'Total hall rent',
+    secDeposit:         'Security deposit (refundable)',
+    totalAdvance:       'Total advance payable',
     halfDayTitle:       'Half Day — Select your time slot',
     halfDayRate:        'Rate: ₹23,000 · Pick any 6–8 hour window using the clocks below',
     timeSlot:           'Time slot',
@@ -117,6 +125,14 @@ const T = {
     fullDayDeposit:     'முன்பணம்: ₹35,000 (₹32,000 வாடகை + ₹3,000 திரும்பக்கிடைக்கும் பாதுகாப்புத் தொகை)',
     fullDayEarlyKey:    'தொடக்க நாளில் மாலை 3 மணிக்கு முன் சாவி: கூடுதல் ₹5,000 கட்டணம் (T&C விதி 2)',
     fullDayCancel:      'ரத்துசெய்தல்: முஹூர்த்தம் அல்லாத தேதிகளுக்கு முழு திரும்பக்கொடுப்பு; முஹூர்த்தம் தேதிகளுக்கு 0%',
+    checkOutDate:       'கடைசி நாள் தேதி',
+    singleDayHint:      'ஒரு நாள் பதிவுக்கு தொடக்க தேதியையே வையுங்கள்',
+    multiDayBadge:      'பல நாள் பதிவு',
+    multiDayEntry:      'நுழைவு தொடக்கத்திற்கு முந்தைய நாள் மாலை 3:00 · வெளியேறு கடைசி நாளில் பிற்பகல் 2:00',
+    perDay:             'நாளுக்கு',
+    totalRent:          'மொத்த மண்டப வாடகை',
+    secDeposit:         'பாதுகாப்பு தொகை (திரும்பக்கிடைக்கும்)',
+    totalAdvance:       'செலுத்த வேண்டிய மொத்த முன்பணம்',
     halfDayTitle:       'அரை நாள் — உங்கள் நேர இடைவெளியை தேர்வு செய்யுங்கள்',
     halfDayRate:        'கட்டணம்: ₹23,000 · கீழே உள்ள கடிகாரங்களில் 6–8 மணி நேர சாளரத்தை தேர்வு செய்யுங்கள்',
     timeSlot:           'நேர இடைவெளி',
@@ -177,6 +193,7 @@ export default class EnquiryForm extends Component {
   @tracked availabilityLoading= false;
   @tracked rentalType         = '';
   @tracked selectedDate       = '';
+  @tracked endDate            = '';
 
   constructor(owner, args) {
     super(owner, args);
@@ -237,6 +254,15 @@ export default class EnquiryForm extends Component {
   get showTimePickers() { return this.rentalType === 'HALF_DAY' || this.rentalType === 'HOURLY'; }
   get showHourlyHint()  { return this.rentalType === 'HOURLY'; }
 
+  get numDays() {
+    if (!this.selectedDate || !this.endDate || this.endDate <= this.selectedDate) return 1;
+    const ms = new Date(this.endDate) - new Date(this.selectedDate);
+    return Math.round(ms / 86400000) + 1;
+  }
+  get isMultiDay()          { return this.numDays > 1; }
+  get totalRentFormatted()  { return (this.numDays * 32000).toLocaleString('en-IN'); }
+  get totalAdvFormatted()   { return (this.numDays * 35000).toLocaleString('en-IN'); }
+
   get slotSuggestion() {
     const slots = this.bookedSlots;
     if (!slots || slots.length === 0) return null;
@@ -282,6 +308,7 @@ export default class EnquiryForm extends Component {
   @action
   selectRental(event) {
     this.rentalType = event.target.value;
+    this.endDate = this.selectedDate;
     const form = event.target.form;
     if (form) {
       const ft = form.elements.namedItem('functionType');
@@ -318,7 +345,13 @@ export default class EnquiryForm extends Component {
   @action
   onDateChange(iso) {
     this.selectedDate = iso;
+    this.endDate = iso;
     this.checkDate(iso);
+  }
+
+  @action
+  onEndDateChange(iso) {
+    this.endDate = iso;
   }
 
   @action
@@ -341,6 +374,7 @@ export default class EnquiryForm extends Component {
       this._pendingPayload = {
         customerName: fd.get('customerName'),
         eventDate:    this.selectedDate,
+        endDate:      (this.rentalType === 'FULL_DAY' && this.endDate && this.endDate !== this.selectedDate) ? this.endDate : null,
         rentalType:   fd.get('rentalType'),
         functionType: fd.get('functionType'),
         startTime:    fd.get('startTime') || null,
@@ -361,6 +395,7 @@ export default class EnquiryForm extends Component {
       customerName: fd.get('customerName'),
       mobile:       this.auth.user?.mobile,
       eventDate:    this.selectedDate,
+      endDate:      (this.rentalType === 'FULL_DAY' && this.endDate && this.endDate !== this.selectedDate) ? this.endDate : null,
       rentalType:   fd.get('rentalType'),
       functionType: fd.get('functionType'),
       startTime:    fd.get('startTime') || null,
@@ -524,11 +559,53 @@ export default class EnquiryForm extends Component {
 
         {{! Time info / pickers }}
         {{#if this.isMarriage}}
+          {{! End date picker for multi-day bookings }}
+          {{#if this.selectedDate}}
+            <div>
+              <label class="block text-sm font-medium text-stone-700 mb-1.5">
+                {{this.t.checkOutDate}}
+                <span class="ml-1 font-normal text-stone-400 text-xs">{{this.t.singleDayHint}}</span>
+              </label>
+              <DatePickerCalendar
+                @value={{this.endDate}}
+                @min={{this.selectedDate}}
+                @onChange={{this.onEndDateChange}}
+              />
+              {{#if this.isMultiDay}}
+                <div class="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 animate-fade-in">
+                  <p class="text-xs font-bold text-rose-700 uppercase tracking-wide mb-2">
+                    {{this.t.multiDayBadge}} — {{this.numDays}} days
+                  </p>
+                  <p class="text-xs text-rose-600 mb-2">{{this.t.multiDayEntry}}</p>
+                  <div class="space-y-1 text-xs">
+                    <div class="flex justify-between text-stone-700">
+                      <span>{{this.numDays}} × ₹32,000 {{this.t.perDay}}</span>
+                      <span class="font-semibold">₹{{this.totalRentFormatted}}</span>
+                    </div>
+                    <div class="flex justify-between text-stone-500">
+                      <span>{{this.t.secDeposit}}</span>
+                      <span>₹3,000</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-rose-800 border-t border-rose-200 pt-1 mt-1">
+                      <span>{{this.t.totalAdvance}}</span>
+                      <span>₹{{this.totalAdvFormatted}}</span>
+                    </div>
+                  </div>
+                </div>
+              {{/if}}
+            </div>
+          {{/if}}
+
           <div class="rounded-lg border border-rose-100 bg-rose-50 px-4 py-3 text-sm space-y-2">
             <p class="font-medium text-rose-800">{{this.t.fullDayAutoTitle}}</p>
             <div class="text-xs text-rose-700 space-y-1">
-              <p>{{this.t.fullDayEntry}}</p>
-              <p>{{this.t.fullDayDeposit}}</p>
+              {{#if this.isMultiDay}}
+                <p>{{this.t.multiDayEntry}}</p>
+                <p>{{this.t.totalAdvance}}: ₹{{this.totalAdvFormatted}} ({{this.numDays}} × ₹32,000 + ₹3,000 security)</p>
+              {{else}}
+                <p>{{this.t.fullDayEntry}}</p>
+                <p>{{this.t.fullDayDeposit}}</p>
+              {{/if}}
               <p>{{this.t.fullDayEarlyKey}}</p>
               <p>{{this.t.fullDayCancel}}</p>
             </div>

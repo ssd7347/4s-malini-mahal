@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -90,6 +91,8 @@ public class EnquiryServlet extends HttpServlet {
         toSave.setCustomerName(input.getCustomerName().trim());
         toSave.setMobile(input.getMobile().trim());
         toSave.setEventDate(input.getEventDate());
+        LocalDate effectiveEndDate = (input.getEndDate() != null) ? input.getEndDate() : input.getEventDate();
+        toSave.setEndDate(effectiveEndDate);
         toSave.setRentalType(input.getRentalType());
         toSave.setFunctionType(input.getFunctionType().trim());
         toSave.setMessage(input.getMessage() == null ? null : input.getMessage().trim());
@@ -232,13 +235,13 @@ public class EnquiryServlet extends HttpServlet {
 
     /**
      * Compute end_datetime in IST per T&C Rule 1:
-     *   FULL_DAY → event date at 14:00 (2:00 PM)
+     *   FULL_DAY → endDate (or eventDate for single-day) at 14:00 (2:00 PM)
      *   HALF_DAY / HOURLY → event date at customer-supplied endTime
      */
     private static OffsetDateTime computeEnd(Enquiry e) {
         if ("FULL_DAY".equals(e.getRentalType())) {
-            return e.getEventDate().atTime(14, 0)
-                    .atZone(IST).toOffsetDateTime();
+            LocalDate lastDay = e.getEndDate() != null ? e.getEndDate() : e.getEventDate();
+            return lastDay.atTime(14, 0).atZone(IST).toOffsetDateTime();
         }
         return e.getEventDate().atTime(LocalTime.parse(e.getEndTime()))
                 .atZone(IST).toOffsetDateTime();
@@ -250,6 +253,10 @@ public class EnquiryServlet extends HttpServlet {
         if (!e.getMobile().trim().matches("[6-9]\\d{9}"))
             return "Mobile must be a 10-digit number starting with 6, 7, 8, or 9";
         if (e.getEventDate() == null)     return "Event date is required";
+        if (e.getEndDate() != null && e.getEndDate().isBefore(e.getEventDate()))
+            return "End date cannot be before start date";
+        if (e.getEndDate() != null && !e.getEndDate().equals(e.getEventDate()) && !"FULL_DAY".equals(e.getRentalType()))
+            return "Multi-day booking is only available for Full Day rental";
         if (isBlank(e.getRentalType()))   return "Rental type is required";
 
         List<String> allowed = FUNCTION_TYPES.get(e.getRentalType());

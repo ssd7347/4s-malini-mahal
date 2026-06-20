@@ -21,10 +21,10 @@ public class EnquiryDao {
     public Enquiry create(Enquiry e) throws SQLException {
         final String sql = """
                 INSERT INTO enquiries
-                    (reference, customer_name, mobile, event_date, function_type, rental_type, message,
+                    (reference, customer_name, mobile, event_date, end_date, function_type, rental_type, message,
                      start_datetime, end_datetime, is_muhurtham, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'AWAITING_PAYMENT')
-                RETURNING id, reference, status, created_at, start_datetime, end_datetime, is_muhurtham
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'AWAITING_PAYMENT')
+                RETURNING id, reference, status, created_at, start_datetime, end_datetime, is_muhurtham, end_date
                 """;
 
         SQLException last = null;
@@ -36,12 +36,13 @@ public class EnquiryDao {
                 ps.setString(2, e.getCustomerName());
                 ps.setString(3, e.getMobile());
                 ps.setObject(4, e.getEventDate());
-                ps.setString(5, e.getFunctionType());
-                ps.setString(6, e.getRentalType());
-                ps.setString(7, e.getMessage());
-                ps.setObject(8, e.getStartDatetime());
-                ps.setObject(9, e.getEndDatetime());
-                ps.setBoolean(10, e.isMuhurtham());
+                ps.setObject(5, e.getEndDate() != null ? e.getEndDate() : e.getEventDate());
+                ps.setString(6, e.getFunctionType());
+                ps.setString(7, e.getRentalType());
+                ps.setString(8, e.getMessage());
+                ps.setObject(9, e.getStartDatetime());
+                ps.setObject(10, e.getEndDatetime());
+                ps.setBoolean(11, e.isMuhurtham());
 
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
@@ -52,6 +53,7 @@ public class EnquiryDao {
                     e.setStartDatetime(rs.getObject("start_datetime", OffsetDateTime.class));
                     e.setEndDatetime(rs.getObject("end_datetime", OffsetDateTime.class));
                     e.setMuhurtham(rs.getBoolean("is_muhurtham"));
+                    e.setEndDate(rs.getObject("end_date", java.time.LocalDate.class));
                     return e;
                 }
             } catch (SQLException ex) {
@@ -81,7 +83,7 @@ public class EnquiryDao {
 
     public Enquiry findByReference(String reference) throws SQLException {
         final String sql = """
-                SELECT id, reference, customer_name, mobile, event_date,
+                SELECT id, reference, customer_name, mobile, event_date, end_date,
                        function_type, rental_type, message, status, created_at,
                        start_datetime, end_datetime,
                        elec_units, gas_kg, decoration_charge_paise,
@@ -101,7 +103,7 @@ public class EnquiryDao {
 
     public List<Enquiry> listByMobile(String mobile) throws SQLException {
         final String sql = """
-                SELECT id, reference, customer_name, mobile, event_date,
+                SELECT id, reference, customer_name, mobile, event_date, end_date,
                        function_type, rental_type, message, status, created_at,
                        start_datetime, end_datetime,
                        elec_units, gas_kg, decoration_charge_paise,
@@ -123,7 +125,7 @@ public class EnquiryDao {
 
     public List<Enquiry> listAll() throws SQLException {
         final String sql = """
-                SELECT id, reference, customer_name, mobile, event_date,
+                SELECT id, reference, customer_name, mobile, event_date, end_date,
                        function_type, rental_type, message, status, created_at,
                        start_datetime, end_datetime,
                        elec_units, gas_kg, decoration_charge_paise,
@@ -232,6 +234,7 @@ public class EnquiryDao {
         e.setCustomerName(rs.getString("customer_name"));
         e.setMobile(rs.getString("mobile"));
         e.setEventDate(rs.getObject("event_date", java.time.LocalDate.class));
+        e.setEndDate(rs.getObject("end_date", java.time.LocalDate.class));
         e.setFunctionType(rs.getString("function_type"));
         e.setRentalType(rs.getString("rental_type"));
         e.setMessage(rs.getString("message"));

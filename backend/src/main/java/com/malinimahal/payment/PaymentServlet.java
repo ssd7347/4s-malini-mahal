@@ -346,7 +346,15 @@ public class PaymentServlet extends HttpServlet {
 
     public static long computeBaseRentPaise(Enquiry enquiry) {
         return switch (enquiry.getRentalType() == null ? "" : enquiry.getRentalType()) {
-            case "FULL_DAY" -> 3_500_000L;   // T&C Rule 5: advance deposit ₹35,000
+            case "FULL_DAY" -> {
+                long days = 1;
+                if (enquiry.getEndDate() != null && enquiry.getEventDate() != null
+                        && enquiry.getEndDate().isAfter(enquiry.getEventDate())) {
+                    days = java.time.temporal.ChronoUnit.DAYS.between(
+                            enquiry.getEventDate(), enquiry.getEndDate()) + 1;
+                }
+                yield days * 3_500_000L;   // ₹35,000 per day (₹32,000 rent + ₹3,000 security)
+            }
             case "HALF_DAY" -> 2_300_000L;
             case "HOURLY"   -> {
                 if (enquiry.getStartDatetime() != null && enquiry.getEndDatetime() != null) {

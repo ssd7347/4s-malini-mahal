@@ -11,6 +11,7 @@ public class Enquiry {
     private String customerName;
     private String mobile;
     private LocalDate eventDate;
+    private LocalDate endDate;
     private String functionType;
     private String rentalType;
     private String message;
@@ -41,6 +42,9 @@ public class Enquiry {
 
     public LocalDate getEventDate() { return eventDate; }
     public void setEventDate(LocalDate eventDate) { this.eventDate = eventDate; }
+
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
     public String getFunctionType() { return functionType; }
     public void setFunctionType(String functionType) { this.functionType = functionType; }
