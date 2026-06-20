@@ -56,6 +56,10 @@ public class SchemaInitializer implements ServletContextListener {
                 "  ALTER TABLE enquiries DROP CONSTRAINT IF EXISTS enquiries_status_check; " +
                 "  ALTER TABLE enquiries ADD CONSTRAINT enquiries_status_check " +
                 "    CHECK (status IN ('NEW','UNDER_ENQUIRY','AWAITING_PAYMENT','CONFIRMED','DECLINED','CANCELLED','COMPLETED','REJECTED')); " +
+                "  ALTER TABLE enquiries DROP CONSTRAINT IF EXISTS enquiries_function_type_check; " +
+                "  ALTER TABLE enquiries ADD CONSTRAINT enquiries_function_type_check " +
+                "    CHECK (function_type IN ('MARRIAGE','RECEPTION','ENGAGEMENT','BIRTHDAY_FUNCTION','OTHER'," +
+                "      'MEETING','CONFERENCE','TRAINING_SESSION','SEMINAR','WORKSHOP','SMALL_GATHERING','OTHER_HOURLY')); " +
                 "EXCEPTION WHEN OTHERS THEN NULL; END $$;"
             );
             sce.getServletContext().log("Enquiry schema migrations applied.");
