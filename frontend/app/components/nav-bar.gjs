@@ -64,8 +64,8 @@ export default class NavBar extends Component {
           <LinkTo @route="index"     class={{NAV_LINK}}>{{this.t.home}}</LinkTo>
           <LinkTo @route="gallery"   class={{NAV_LINK}}>{{this.t.gallery}}</LinkTo>
           <LinkTo @route="amenities" class={{NAV_LINK}}>{{this.t.amenities}}</LinkTo>
-          <LinkTo @route="booking"      class={{NAV_LINK}}>{{this.t.bookNow}}</LinkTo>
           <LinkTo @route="availability" class={{NAV_LINK}}>{{this.t.availability}}</LinkTo>
+          <LinkTo @route="booking"      class={{NAV_LINK}}>{{this.t.bookNow}}</LinkTo>
           <LinkTo @route="contact"      class={{NAV_LINK}}>{{this.t.contact}}</LinkTo>
           {{#if this.auth.isAdmin}}
             <LinkTo @route="admin" class={{NAV_LINK}}>{{this.t.admin}}</LinkTo>
@@ -133,8 +133,8 @@ export default class NavBar extends Component {
           <LinkTo @route="index"     class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.home}}</LinkTo>
           <LinkTo @route="gallery"   class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.gallery}}</LinkTo>
           <LinkTo @route="amenities" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.amenities}}</LinkTo>
-          <LinkTo @route="booking"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.bookNow}}</LinkTo>
           <LinkTo @route="availability" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.availability}}</LinkTo>
+          <LinkTo @route="booking"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.bookNow}}</LinkTo>
           <LinkTo @route="contact"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.contact}}</LinkTo>
           {{#if this.auth.isAdmin}}
             <LinkTo @route="admin" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.admin}}</LinkTo>
