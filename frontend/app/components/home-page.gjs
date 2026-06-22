@@ -203,6 +203,8 @@ export default class HomePage extends Component {
 
   @tracked _galleryItems = [];
   @tracked lightboxIndex = null;
+  @tracked _heroSlide = 0;
+  _heroTimer = null;
 
   constructor(owner, args) {
     super(owner, args);
@@ -233,6 +235,7 @@ export default class HomePage extends Component {
     super.willDestroy();
     document.removeEventListener('keydown', this._handleKey);
     if (this._revealObserver) this._revealObserver.disconnect();
+    if (this._heroTimer) clearInterval(this._heroTimer);
   }
 
   get lightboxCount() { return Math.min(this._galleryItems.length, 6); }
@@ -262,6 +265,12 @@ export default class HomePage extends Component {
       if (res.ok) {
         const data = await res.json();
         this._galleryItems = data.filter(i => i.mediaType === 'IMAGE' && (i.filename || i.mediaUrl));
+        if (this._galleryItems.length > 1) {
+          if (this._heroTimer) clearInterval(this._heroTimer);
+          this._heroTimer = setInterval(() => {
+            this._heroSlide = (this._heroSlide + 1) % this._galleryItems.length;
+          }, 5000);
+        }
       }
     } catch (_) {}
   }
@@ -269,6 +278,14 @@ export default class HomePage extends Component {
   get t()         { return T[this.language.lang]; }
   _imgSrc(idx)    { const it = this._galleryItems[idx]; return it ? (it.mediaUrl || apiUrl('/api/media/' + it.filename)) : null; }
   get heroImage() { return this._imgSrc(0); }
+  get heroSlides() {
+    return this._galleryItems.map((item, i) => ({
+      src: item.mediaUrl || apiUrl('/api/media/' + item.filename),
+      active: i === this._heroSlide
+    }));
+  }
+  get hasHeroSlides() { return this.heroSlides.length > 0; }
+  get hasMultipleHeroSlides() { return this.heroSlides.length > 1; }
   get gi0()       { return this._imgSrc(0); }
   get gi1()       { return this._imgSrc(1); }
   get gi2()       { return this._imgSrc(2); }
@@ -282,8 +299,11 @@ export default class HomePage extends Component {
 
       {{! ── HERO ── }}
       <div class="relative rounded-2xl overflow-hidden mb-8" style="min-height: 500px;">
-        {{#if this.heroImage}}
-          <img src={{this.heroImage}} alt="4S Malini Mahal" class="absolute inset-0 w-full h-full object-cover" />
+        {{#if this.hasHeroSlides}}
+          {{#each this.heroSlides as |slide|}}
+            <img src={{slide.src}} alt="4S Malini Mahal"
+                 class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 {{if slide.active 'opacity-100' 'opacity-0'}}" />
+          {{/each}}
           <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/75"></div>
         {{else}}
           <div class="absolute inset-0 bg-gradient-to-br from-rose-900 via-rose-800 to-stone-900"></div>
@@ -319,6 +339,13 @@ export default class HomePage extends Component {
             </LinkTo>
           </div>
         </div>
+        {{#if this.hasMultipleHeroSlides}}
+          <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            {{#each this.heroSlides as |slide|}}
+              <span class="block h-1.5 rounded-full transition-all duration-500 {{if slide.active 'w-6 bg-white' 'w-1.5 bg-white/40'}}"></span>
+            {{/each}}
+          </div>
+        {{/if}}
       </div>
 
       {{! ── STATS BANNER ── }}
