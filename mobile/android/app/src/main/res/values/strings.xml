@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MM Admin</string>
+    <string name="title_activity_main">MM Admin</string>
+    <string name="package_name">in.malinimahal.admin</string>
+    <string name="custom_url_scheme">in.malinimahal.admin</string>
+</resources>
