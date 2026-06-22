@@ -142,6 +142,21 @@ public class EnquiryDao {
         return out;
     }
 
+    public List<String> findReferencesForAutoComplete() throws SQLException {
+        List<String> refs = new ArrayList<>();
+        String sql =
+            "SELECT reference FROM enquiries WHERE status = 'CONFIRMED' AND (" +
+            "  (rental_type IN ('HOURLY','HALF_DAY') AND end_datetime < NOW()) OR" +
+            "  (rental_type = 'FULL_DAY' AND COALESCE(end_date, event_date) < CURRENT_DATE)" +
+            ")";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) refs.add(rs.getString("reference"));
+        }
+        return refs;
+    }
+
     public boolean updateStatus(String reference, String status) throws SQLException {
         try (Connection conn = Database.getConnection();
              PreparedStatement ps = conn.prepareStatement(
