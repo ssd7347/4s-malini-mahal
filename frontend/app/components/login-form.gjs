@@ -153,6 +153,7 @@ export default class LoginForm extends Component {
           <label class="block text-sm font-medium text-stone-700 mb-1">{{this.t.mobileLabel}}</label>
           <input
             type="tel"
+            inputmode="numeric"
             required
             pattern="[6-9][0-9]{9}"
             maxlength="10"
@@ -204,9 +205,10 @@ export default class LoginForm extends Component {
         <div>
           <label class="block text-sm font-medium text-stone-700 mb-1">{{this.t.otpLabel}}</label>
           <input
-            type="text"
+            type="tel"
             required
             inputmode="numeric"
+            autocomplete="one-time-code"
             pattern="[0-9]{6}"
             maxlength="6"
             placeholder={{this.t.otpPlaceholder}}
