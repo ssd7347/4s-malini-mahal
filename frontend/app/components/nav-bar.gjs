@@ -29,6 +29,15 @@ export default class NavBar extends Component {
 
   get t() { return T[this.language.lang]; }
 
+  get appMode() {
+    try { return localStorage.getItem('mmAppMode') || 'browser'; } catch(_) { return 'browser'; }
+  }
+  get isAdminApp()    { return this.appMode === 'admin'; }
+  get isCustomerApp() { return this.appMode === 'customer'; }
+
+  // In customer app, never show Admin link even if user has admin role
+  get showAdminLink() { return this.auth.isAdmin && !this.isCustomerApp; }
+
   get displayMobile() {
     const m = this.auth.user?.mobile;
     if (!m) return '';
@@ -59,18 +68,20 @@ export default class NavBar extends Component {
           <span class="font-semibold text-stone-900 hidden sm:block tracking-tight">Malini&nbsp;Mahal</span>
         </LinkTo>
 
-        {{! Desktop navigation }}
-        <div class="hidden md:flex items-center gap-0.5 text-sm font-medium">
-          <LinkTo @route="index"     class={{NAV_LINK}}>{{this.t.home}}</LinkTo>
-          <LinkTo @route="gallery"   class={{NAV_LINK}}>{{this.t.gallery}}</LinkTo>
-          <LinkTo @route="amenities" class={{NAV_LINK}}>{{this.t.amenities}}</LinkTo>
-          <LinkTo @route="availability" class={{NAV_LINK}}>{{this.t.availability}}</LinkTo>
-          <LinkTo @route="booking"      class={{NAV_LINK}}>{{this.t.bookNow}}</LinkTo>
-          <LinkTo @route="contact"      class={{NAV_LINK}}>{{this.t.contact}}</LinkTo>
-          {{#if this.auth.isAdmin}}
-            <LinkTo @route="admin" class={{NAV_LINK}}>{{this.t.admin}}</LinkTo>
-          {{/if}}
-        </div>
+        {{! Desktop navigation — hidden entirely in admin app (admin uses panel directly) }}
+        {{#unless this.isAdminApp}}
+          <div class="hidden md:flex items-center gap-0.5 text-sm font-medium">
+            <LinkTo @route="index"        class={{NAV_LINK}}>{{this.t.home}}</LinkTo>
+            <LinkTo @route="gallery"      class={{NAV_LINK}}>{{this.t.gallery}}</LinkTo>
+            <LinkTo @route="amenities"    class={{NAV_LINK}}>{{this.t.amenities}}</LinkTo>
+            <LinkTo @route="availability" class={{NAV_LINK}}>{{this.t.availability}}</LinkTo>
+            <LinkTo @route="booking"      class={{NAV_LINK}}>{{this.t.bookNow}}</LinkTo>
+            <LinkTo @route="contact"      class={{NAV_LINK}}>{{this.t.contact}}</LinkTo>
+            {{#if this.showAdminLink}}
+              <LinkTo @route="admin" class={{NAV_LINK}}>{{this.t.admin}}</LinkTo>
+            {{/if}}
+          </div>
+        {{/unless}}
 
         {{! Right side: lang toggle + login + hamburger }}
         <div class="flex shrink-0 items-center gap-2">
@@ -130,15 +141,17 @@ export default class NavBar extends Component {
       {{! Mobile dropdown }}
       {{#if this.mobileMenuOpen}}
         <div class="md:hidden border-t border-stone-100 bg-white px-3 py-3 space-y-1 shadow-lg">
-          <LinkTo @route="index"     class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.home}}</LinkTo>
-          <LinkTo @route="gallery"   class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.gallery}}</LinkTo>
-          <LinkTo @route="amenities" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.amenities}}</LinkTo>
-          <LinkTo @route="availability" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.availability}}</LinkTo>
-          <LinkTo @route="booking"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.bookNow}}</LinkTo>
-          <LinkTo @route="contact"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.contact}}</LinkTo>
-          {{#if this.auth.isAdmin}}
-            <LinkTo @route="admin" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.admin}}</LinkTo>
-          {{/if}}
+          {{#unless this.isAdminApp}}
+            <LinkTo @route="index"        class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.home}}</LinkTo>
+            <LinkTo @route="gallery"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.gallery}}</LinkTo>
+            <LinkTo @route="amenities"    class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.amenities}}</LinkTo>
+            <LinkTo @route="availability" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.availability}}</LinkTo>
+            <LinkTo @route="booking"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.bookNow}}</LinkTo>
+            <LinkTo @route="contact"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.contact}}</LinkTo>
+            {{#if this.showAdminLink}}
+              <LinkTo @route="admin" class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.admin}}</LinkTo>
+            {{/if}}
+          {{/unless}}
 
           <div class="pt-2 border-t border-stone-100 mt-2">
             {{#if this.auth.isLoggedIn}}

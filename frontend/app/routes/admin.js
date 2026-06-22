@@ -6,6 +6,14 @@ export default class AdminRoute extends Route {
   @service router;
 
   async beforeModel() {
+    // Block admin panel entirely in the customer app
+    try {
+      if (localStorage.getItem('mmAppMode') === 'customer') {
+        this.router.transitionTo('index');
+        return;
+      }
+    } catch(_) {}
+
     await this.auth.checkAuth();
     if (!this.auth.isLoggedIn) {
       this.auth.returnTo = 'admin';
