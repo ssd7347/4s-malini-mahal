@@ -300,7 +300,7 @@ export default class HomePage extends Component {
       {{! ── HERO ── }}
       <div class="relative rounded-2xl overflow-hidden mb-8" style="min-height: 500px;">
         {{#if this.hasHeroSlides}}
-          {{#each this.heroSlides as |slide|}}
+          {{#each this.heroSlides key="src" as |slide|}}
             <img src={{slide.src}} alt="4S Malini Mahal"
                  class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 {{if slide.active 'opacity-100' 'opacity-0'}}" />
           {{/each}}
