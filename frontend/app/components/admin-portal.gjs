@@ -102,11 +102,11 @@ export default class AdminPortal extends Component {
         isImage: item.mediaType === 'IMAGE',
         isLocalVideo,
         thumbSrc: item.mediaType === 'IMAGE'
-          ? apiUrl('/api/media/' + item.filename)
+          ? (item.mediaUrl || apiUrl('/api/media/' + item.filename))
           : isLocalVideo
             ? null
             : (ytId(item.youtubeUrl) ? `https://img.youtube.com/vi/${ytId(item.youtubeUrl)}/hqdefault.jpg` : ''),
-        videoSrc: isLocalVideo ? apiUrl('/api/media/' + item.filename) : null,
+        videoSrc: isLocalVideo ? (item.mediaUrl || apiUrl('/api/media/' + item.filename)) : null,
       };
     });
   }
