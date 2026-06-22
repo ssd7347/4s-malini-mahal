@@ -4,15 +4,13 @@ import { service } from '@ember/service';
 export default class AdminRoute extends Route {
   @service auth;
   @service router;
+  @service appMode;
 
   async beforeModel() {
-    // Block admin panel entirely in the customer app
-    try {
-      if (localStorage.getItem('mmAppMode') === 'customer') {
-        this.router.transitionTo('index');
-        return;
-      }
-    } catch(_) {}
+    if (this.appMode.isCustomerApp) {
+      this.router.transitionTo('index');
+      return;
+    }
 
     await this.auth.checkAuth();
     if (!this.auth.isLoggedIn) {

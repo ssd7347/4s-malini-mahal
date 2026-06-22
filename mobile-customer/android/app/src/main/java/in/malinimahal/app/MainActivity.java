@@ -9,7 +9,7 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         getBridge().getWebView().post(() ->
             getBridge().getWebView().evaluateJavascript(
-                "localStorage.setItem('mmAppMode','customer');", null
+                "localStorage.setItem('mmAppMode','customer');window.dispatchEvent(new CustomEvent('mmAppModeChanged'));", null
             )
         );
     }

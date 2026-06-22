@@ -5,6 +5,7 @@ import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
 import { on } from '@ember/modifier';
 
+
 const NAV_LINK = 'block px-3 py-1.5 rounded-md text-stone-600 transition-colors duration-150 hover:text-rose-700 hover:bg-rose-50 [&.active]:text-rose-700 [&.active]:bg-rose-50 whitespace-nowrap';
 const MOBILE_LINK = 'block w-full rounded-lg px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors duration-150 hover:bg-rose-50 hover:text-rose-700 [&.active]:bg-rose-50 [&.active]:text-rose-700';
 
@@ -25,18 +26,12 @@ export default class NavBar extends Component {
   @service auth;
   @service router;
   @service language;
+  @service appMode;
   @tracked mobileMenuOpen = false;
 
   get t() { return T[this.language.lang]; }
 
-  get appMode() {
-    try { return localStorage.getItem('mmAppMode') || 'browser'; } catch(_) { return 'browser'; }
-  }
-  get isAdminApp()    { return this.appMode === 'admin'; }
-  get isCustomerApp() { return this.appMode === 'customer'; }
-
-  // In customer app, never show Admin link even if user has admin role
-  get showAdminLink() { return this.auth.isAdmin && !this.isCustomerApp; }
+  get showAdminLink() { return this.auth.isAdmin && !this.appMode.isCustomerApp; }
 
   get displayMobile() {
     const m = this.auth.user?.mobile;
@@ -69,7 +64,7 @@ export default class NavBar extends Component {
         </LinkTo>
 
         {{! Desktop navigation — hidden entirely in admin app (admin uses panel directly) }}
-        {{#unless this.isAdminApp}}
+        {{#unless this.appMode.isAdminApp}}
           <div class="hidden md:flex items-center gap-0.5 text-sm font-medium">
             <LinkTo @route="index"        class={{NAV_LINK}}>{{this.t.home}}</LinkTo>
             <LinkTo @route="gallery"      class={{NAV_LINK}}>{{this.t.gallery}}</LinkTo>
@@ -141,7 +136,7 @@ export default class NavBar extends Component {
       {{! Mobile dropdown }}
       {{#if this.mobileMenuOpen}}
         <div class="md:hidden border-t border-stone-100 bg-white px-3 py-3 space-y-1 shadow-lg">
-          {{#unless this.isAdminApp}}
+          {{#unless this.appMode.isAdminApp}}
             <LinkTo @route="index"        class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.home}}</LinkTo>
             <LinkTo @route="gallery"      class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.gallery}}</LinkTo>
             <LinkTo @route="amenities"    class={{MOBILE_LINK}} {{on "click" this.closeMenu}}>{{this.t.amenities}}</LinkTo>
