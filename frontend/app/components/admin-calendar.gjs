@@ -12,17 +12,6 @@ const MONTH_NAMES = [
   'July','August','September','October','November','December',
 ];
 
-const STATUS_DOT = {
-  NEW:              'bg-stone-400',
-  UNDER_ENQUIRY:    'bg-amber-500',
-  AWAITING_PAYMENT: 'bg-yellow-400',
-  CONFIRMED:        'bg-green-500',
-  COMPLETED:        'bg-blue-500',
-  DECLINED:         'bg-red-400',
-  REJECTED:         'bg-orange-500',
-  CANCELLED:        'bg-stone-200',
-};
-
 const STATUS_PILL = {
   NEW:              'bg-stone-100 text-stone-600',
   UNDER_ENQUIRY:    'bg-amber-50 text-amber-700',
@@ -46,6 +35,12 @@ const STATUS_LABELS = {
 };
 
 const RENTAL_LABELS = { FULL_DAY: 'Full day', HALF_DAY: 'Half day', HOURLY: 'Hourly' };
+
+// Priority order for cell background (highest = most important)
+const STATUS_PRIORITY = {
+  CONFIRMED: 5, AWAITING_PAYMENT: 4, UNDER_ENQUIRY: 3, NEW: 2, COMPLETED: 1,
+  DECLINED: 0, REJECTED: 0, CANCELLED: 0,
+};
 
 function todayIso() {
   const d = new Date();
@@ -80,7 +75,7 @@ export default class AdminCalendar extends Component {
   }
 
   get headerLabel() { return `${MONTH_NAMES[this.viewMonth]} ${this.viewYear}`; }
-  get dayLabels() { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; }
+  get dayLabels()   { return ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']; }
 
   get byDate() {
     const map = {};
@@ -100,15 +95,17 @@ export default class AdminCalendar extends Component {
   }
 
   get weeks() {
-    const y = this.viewYear, m = this.viewMonth;
-    const firstDow    = new Date(y, m, 1).getDay();
-    const daysInMonth = new Date(y, m + 1, 0).getDate();
-    const daysInPrev  = new Date(y, m, 0).getDate();
+    const y      = this.viewYear;
+    const m      = this.viewMonth;
     const today  = todayIso();
     const byDate = this.byDate;
     const mSet   = this.muhurthamSet;
     const bSet   = this.blockedSet;
     const selIso = this.selectedIso;
+
+    const firstDow    = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const daysInPrev  = new Date(y, m, 0).getDate();
 
     const cells = [];
 
@@ -123,28 +120,55 @@ export default class AdminCalendar extends Component {
       const isToday     = iso === today;
       const isSelected  = iso === selIso;
 
-      const bookings = (byDate[iso] ?? []).map(b => ({
+      const rawBookings = byDate[iso] ?? [];
+      const bookings = rawBookings.map(b => ({
         ...b,
-        dot:         STATUS_DOT[b.status]  ?? 'bg-stone-300',
-        pill:        STATUS_PILL[b.status] ?? 'bg-stone-100 text-stone-600',
+        pill:        STATUS_PILL[b.status]  ?? 'bg-stone-100 text-stone-600',
         statusLabel: STATUS_LABELS[b.status] ?? b.status,
         rentalLabel: RENTAL_LABELS[b.rentalType] ?? b.rentalType,
         startFmt:    fmtDt(b.startDatetime),
         endFmt:      fmtDt(b.endDatetime),
       }));
 
-      let cellCls = 'w-full min-h-16 sm:min-h-20 p-1.5 text-left align-top transition-colors duration-100 ';
-      if (isSelected)       cellCls += 'ring-2 ring-inset ring-rose-500 ';
-      if (isMuhurtham)      cellCls += 'bg-amber-50 hover:bg-amber-100/80 ';
-      else if (isBlocked)   cellCls += 'bg-red-50 ';
-      else                  cellCls += 'hover:bg-stone-50 ';
+      // Pick highest-priority booking for cell colour
+      const top = rawBookings.reduce((best, b) =>
+        (STATUS_PRIORITY[b.status] ?? 0) > (STATUS_PRIORITY[best?.status] ?? -1) ? b : best
+      , null);
 
-      let dayNumCls = 'text-xs font-semibold select-none ';
-      if (isToday) dayNumCls += 'flex h-5 w-5 items-center justify-center rounded-full bg-rose-700 text-white -mt-0.5 -ml-0.5';
-      else         dayNumCls += 'text-stone-700';
+      let cls = 'relative flex flex-col items-center justify-center h-10 w-full rounded-xl text-sm transition-all duration-100 ';
 
-      cells.push({ key: iso, outside: false, day: d, iso,
-        isToday, isMuhurtham, isBlocked, isSelected, bookings, cellCls, dayNumCls });
+      if (top) {
+        const s = top.status;
+        if (s === 'CONFIRMED')
+          cls += 'bg-green-100 text-green-800 font-semibold cursor-pointer hover:bg-green-200';
+        else if (s === 'AWAITING_PAYMENT')
+          cls += 'bg-yellow-100 text-yellow-800 font-semibold cursor-pointer hover:bg-yellow-200';
+        else if (s === 'UNDER_ENQUIRY' || s === 'NEW')
+          cls += 'bg-amber-100 text-amber-800 font-medium cursor-pointer hover:bg-amber-200';
+        else if (s === 'COMPLETED')
+          cls += 'bg-blue-50 text-blue-700 font-medium cursor-pointer hover:bg-blue-100';
+        else
+          cls += 'bg-stone-100 text-stone-500 font-medium cursor-pointer hover:bg-stone-200';
+      } else if (isBlocked) {
+        cls += 'bg-red-50 text-red-500 font-medium cursor-pointer';
+      } else if (isMuhurtham && isToday) {
+        cls += 'bg-amber-100 text-amber-900 font-semibold ring-2 ring-rose-400 cursor-pointer hover:bg-amber-200';
+      } else if (isMuhurtham) {
+        cls += 'bg-amber-100 text-amber-900 font-semibold cursor-pointer hover:bg-amber-200';
+      } else if (isToday) {
+        cls += 'ring-2 ring-rose-400 text-rose-700 font-semibold cursor-pointer hover:bg-rose-50';
+      } else {
+        cls += 'text-stone-700 font-medium cursor-pointer hover:bg-stone-100';
+      }
+
+      if (isSelected) cls += ' ring-2 ring-rose-500';
+
+      cells.push({
+        key: iso, outside: false, day: d, iso,
+        isToday, isMuhurtham, isBlocked, isSelected,
+        bookingCount: bookings.length,
+        bookings, cls,
+      });
     }
 
     let next = 1;
@@ -197,79 +221,69 @@ export default class AdminCalendar extends Component {
     <div class="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
 
       {{! Month navigation }}
-      <div class="flex items-center justify-between px-5 py-4 border-b border-stone-100 bg-stone-50">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-stone-100 bg-stone-50">
         <button type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200 transition-colors"
+          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-200"
           {{on "click" this.prevMonth}}>
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
           </svg>
         </button>
         <span class="text-sm font-semibold text-stone-800 tracking-wide select-none">{{this.headerLabel}}</span>
         <button type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200 transition-colors"
+          class="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-200"
           {{on "click" this.nextMonth}}>
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
           </svg>
         </button>
       </div>
 
       {{! Day-of-week headers }}
-      <div class="grid grid-cols-7 border-b border-stone-100">
+      <div class="grid grid-cols-7 px-3 pt-3 pb-1">
         {{#each this.dayLabels as |dl|}}
-          <div class="py-2 text-center text-xs font-semibold text-stone-400 select-none">{{dl}}</div>
+          <div class="text-center text-xs font-semibold text-stone-400 py-1 select-none">{{dl}}</div>
         {{/each}}
       </div>
 
       {{! Calendar grid }}
-      <div class="grid grid-cols-7 divide-x divide-y divide-stone-100 border-b border-stone-100">
+      <div class="px-3 pb-3 space-y-1">
         {{#each this.weeks as |week|}}
-          {{#each week as |cell|}}
-            {{#if cell.outside}}
-              <div class="min-h-16 sm:min-h-20 bg-stone-50/50 p-1.5">
-                <span class="text-xs text-stone-200 select-none">{{cell.label}}</span>
-              </div>
-            {{else}}
-              <button type="button" class={{cell.cellCls}} {{on "click" (fn this.selectDay cell)}}>
-                <div class="flex items-start justify-between">
-                  <span class={{cell.dayNumCls}}>{{cell.day}}</span>
-                  <div class="flex items-center gap-0.5">
-                    {{#if cell.isMuhurtham}}
-                      <span class="text-amber-400 text-xs leading-none select-none" title="Muhurtham">★</span>
-                    {{/if}}
-                    {{#if cell.isBlocked}}
-                      <span class="text-red-400 text-xs font-bold leading-none select-none" title="Blocked">✕</span>
-                    {{/if}}
-                  </div>
-                </div>
-                {{! Desktop: name pills }}
-                <div class="mt-1 hidden sm:block space-y-0.5">
-                  {{#each cell.bookings as |b|}}
-                    <div class="rounded px-1 py-0.5 text-xs truncate leading-tight {{b.pill}}">{{b.customerName}}</div>
-                  {{/each}}
-                </div>
-                {{! Mobile: colored dots }}
-                <div class="mt-1 flex flex-wrap gap-0.5 sm:hidden">
-                  {{#each cell.bookings as |b|}}
-                    <span class="inline-block h-1.5 w-1.5 rounded-full {{b.dot}}"></span>
-                  {{/each}}
-                </div>
-              </button>
-            {{/if}}
-          {{/each}}
+          <div class="grid grid-cols-7 gap-1">
+            {{#each week as |cell|}}
+              {{#if cell.outside}}
+                <div class="h-10"></div>
+              {{else}}
+                <button type="button" class={{cell.cls}} {{on "click" (fn this.selectDay cell)}}>
+                  <span class="leading-none text-sm">{{cell.day}}</span>
+                  {{#if cell.isMuhurtham}}
+                    <span class="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-amber-500" aria-hidden="true"></span>
+                  {{/if}}
+                  {{#if cell.isBlocked}}
+                    <span class="absolute top-0.5 right-1 text-[9px] font-bold text-red-400 leading-none" aria-hidden="true">✕</span>
+                  {{/if}}
+                  {{#if cell.bookingCount}}
+                    <span class="absolute top-0.5 right-1 text-[9px] font-bold leading-none opacity-70">{{cell.bookingCount}}</span>
+                  {{/if}}
+                </button>
+              {{/if}}
+            {{/each}}
+          </div>
         {{/each}}
       </div>
 
       {{! Legend }}
-      <div class="flex flex-wrap gap-x-5 gap-y-1.5 px-5 py-3 bg-stone-50 text-xs text-stone-500 select-none">
-        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-green-500"></span>Confirmed</span>
-        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span>Under enquiry</span>
-        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-yellow-400"></span>Awaiting payment</span>
-        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-stone-400"></span>Received</span>
-        <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span>Completed</span>
-        <span class="flex items-center gap-1.5"><span class="text-amber-400">★</span>Muhurtham</span>
-        <span class="flex items-center gap-1.5"><span class="text-red-400 font-bold">✕</span>Blocked</span>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-stone-100 px-4 py-2.5 bg-stone-50 text-xs text-stone-500 select-none">
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-green-100 border border-green-200"></span>Confirmed</span>
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-yellow-100 border border-yellow-200"></span>Awaiting payment</span>
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-amber-100 border border-amber-200"></span>Under enquiry / Received</span>
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-blue-50 border border-blue-200"></span>Completed</span>
+        <span class="flex items-center gap-1.5">
+          <span class="relative h-3 w-3 rounded bg-stone-50 border border-stone-200 flex items-center justify-center">
+            <span class="h-1 w-1 rounded-full bg-amber-500"></span>
+          </span>Muhurtham
+        </span>
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-red-50 border border-red-200 text-[8px] text-red-400 flex items-center justify-center font-bold">✕</span>Blocked</span>
       </div>
     </div>
 
