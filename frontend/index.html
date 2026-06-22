@@ -175,6 +175,15 @@
     }
     </script>
 
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#be123c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MM Admin">
+    <link rel="apple-touch-icon" href="/logo.jpg">
+
     {{content-for "head"}}
 
     <link integrity="" rel="stylesheet" href="/@embroider/virtual/vendor.css">
@@ -194,5 +203,13 @@
     </script>
 
     {{content-for "body-footer"}}
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
   </body>
 </html>
