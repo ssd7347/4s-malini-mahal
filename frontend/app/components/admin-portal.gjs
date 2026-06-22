@@ -6,6 +6,7 @@ import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { apiUrl } from 'frontend/utils/api';
 import AdminCalendar from 'frontend/components/admin-calendar';
+import DatePickerCalendar from 'frontend/components/date-picker-calendar';
 
 const STATUSES = ['NEW', 'UNDER_ENQUIRY', 'AWAITING_PAYMENT', 'CONFIRMED', 'COMPLETED', 'DECLINED', 'REJECTED', 'CANCELLED'];
 
@@ -78,6 +79,7 @@ export default class AdminPortal extends Component {
 
   @tracked enquiries = [];
   @tracked blockedDates = [];
+  @tracked _blockDate = null;
   @tracked galleryItems = [];
   @tracked muhurthamDates = [];
   @tracked termsVersions = [];
@@ -229,17 +231,21 @@ export default class AdminPortal extends Component {
     if (eRes.ok) this.enquiries = await eRes.json();
   }
 
+  @action setBlockDate(iso) { this._blockDate = iso; }
+
   @action
   async addBlock(event) {
     event.preventDefault();
+    if (!this._blockDate) { this.flash('Please select a date'); return; }
     const form = event.currentTarget;
     const fd = new FormData(form);
     const res = await this.api('/api/admin/blocked-dates', {
       method: 'POST',
-      body: JSON.stringify({ date: fd.get('date'), reason: fd.get('reason') }),
+      body: JSON.stringify({ date: this._blockDate, reason: fd.get('reason') }),
     });
     if (res.ok) {
       form.reset();
+      this._blockDate = null;
       await this.loadData();
       this.flash('Date blocked');
     } else {
@@ -681,17 +687,30 @@ export default class AdminPortal extends Component {
         <section class="mt-10">
           <h2 class="text-base font-semibold text-stone-900 mb-3">Blocked Dates</h2>
 
-          <form class="flex flex-wrap gap-2 mb-4" {{on "submit" this.addBlock}}>
-            <input name="date" type="date" required class={{INPUT_CLS}} />
-            <input name="reason" type="text" placeholder="Reason (optional)" class="flex-1 min-w-40 {{INPUT_CLS}}" />
-            <button type="submit"
-              class="inline-flex items-center gap-1.5 rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-rose-800 hover:shadow-md active:scale-[0.98]">
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-              </svg>
-              Block date
-            </button>
-          </form>
+          <div class="mb-4 grid sm:grid-cols-2 gap-4 items-start">
+            <DatePickerCalendar
+              @value={{this._blockDate}}
+              @onChange={{this.setBlockDate}}
+              @min="2000-01-01"
+            />
+            <form class="flex flex-col gap-3" {{on "submit" this.addBlock}}>
+              {{#if this._blockDate}}
+                <p class="text-sm font-semibold text-stone-800">
+                  Selected: <span class="text-rose-700">{{this._blockDate}}</span>
+                </p>
+              {{else}}
+                <p class="text-sm text-stone-400">← Pick a date from the calendar</p>
+              {{/if}}
+              <input name="reason" type="text" placeholder="Reason (optional)" class={{INPUT_CLS}} />
+              <button type="submit"
+                class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-rose-800 hover:shadow-md active:scale-[0.98]">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                Block date
+              </button>
+            </form>
+          </div>
 
           <div class="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
             {{#if this.blockedDates.length}}
