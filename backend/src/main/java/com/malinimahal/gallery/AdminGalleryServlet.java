@@ -88,9 +88,10 @@ public class AdminGalleryServlet extends HttpServlet {
         String title = req.getParameter("title");
         String storedFilename;
         if (CLOUDINARY != null) {
+            byte[] fileBytes = filePart.getInputStream().readAllBytes();
             @SuppressWarnings("unchecked")
             Map<String, Object> result = CLOUDINARY.uploader().upload(
-                filePart.getInputStream(),
+                fileBytes,
                 ObjectUtils.asMap(
                     "folder", "malinimahal",
                     "resource_type", VIDEO_ALLOWED.contains(ext) ? "video" : "image"
