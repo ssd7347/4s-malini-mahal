@@ -1,0 +1,14 @@
+{
+  "appId": "in.malinimahal.app",
+  "appName": "4S Malini Mahal",
+  "webDir": "www",
+  "server": {
+    "url": "https://4s-malini-mahal.netlify.app/",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

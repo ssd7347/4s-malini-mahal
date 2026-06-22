@@ -1,0 +1,10 @@
+node_modules/
+
+# Android build outputs
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+
+# Capacitor generated
+android/app/src/main/assets/public/
