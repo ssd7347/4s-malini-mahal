@@ -3,7 +3,7 @@
   "appName": "MM Admin",
   "webDir": "www",
   "server": {
-    "url": "https://4s-malini-mahal.netlify.app/admin",
+    "url": "https://dist-five-eta-72.vercel.app/admin",
     "cleartext": false
   },
   "android": {

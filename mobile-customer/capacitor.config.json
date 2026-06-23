@@ -3,7 +3,7 @@
   "appName": "4S Malini Mahal",
   "webDir": "www",
   "server": {
-    "url": "https://4s-malini-mahal.netlify.app/",
+    "url": "https://dist-five-eta-72.vercel.app/",
     "cleartext": false
   },
   "android": {
