@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/malinimahal/:path*",
+      "destination": "https://ad2d0b32-f9d2-4722-997d-88a6adc1c868-00-iiv8by951cd5.picard.replit.dev/malinimahal/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
