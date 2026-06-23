@@ -20,3 +20,6 @@ Thumbs.db
 *.env
 .env.*
 application-local.properties
+
+# Local Netlify folder
+.netlify

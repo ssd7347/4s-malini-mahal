@@ -16,9 +16,9 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 COPY --from=build /app/target/malinimahal.war /usr/local/tomcat/webapps/malinimahal.war
 
 # All secrets (DB_URL, DB_USER, DB_PASSWORD, ADMIN_PASSWORD,
-# RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, OWNER_EMAIL,
+# RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, CLOUDINARY_URL, OWNER_EMAIL,
 # EMAIL_SMTP_HOST, EMAIL_USERNAME, EMAIL_PASSWORD, EMAIL_FROM)
-# are injected as environment variables from Koyeb — not hardcoded here.
+# are injected as environment variables from Render — not hardcoded here.
 
 EXPOSE 8080
 CMD ["catalina.sh", "run"]

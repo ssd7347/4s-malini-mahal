@@ -46,7 +46,13 @@
       "Bash(git -C \"C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal\" status)",
       "Bash(git -C \"C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal\" diff)",
       "Bash(git -C \"C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal\" add frontend/app/components/home-page.gjs .claude/settings.local.json)",
-      "Bash(git -C 'C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal' commit -m ' *)"
+      "Bash(git -C 'C:\\\\Users\\\\sivas\\\\Desktop\\\\4s Malini Mahal' commit -m ' *)",
+      "Bash(\"/c/Program Files/nodejs/npm\" run build)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(git commit *)",
+      "Bash(mvn package *)",
+      "Bash(node_modules/.bin/ember build *)"
     ]
   }
 }

@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,12 +36,60 @@ public class AdminEnquiryServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        if ("/export".equals(req.getPathInfo())) {
+            handleExport(req, resp);
+            return;
+        }
         try {
             JsonSupport.write(resp, HttpServletResponse.SC_OK, dao.listAll());
         } catch (Exception e) {
             getServletContext().log("Failed to list enquiries", e);
             JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not load enquiries");
         }
+    }
+
+    private void handleExport(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String month = req.getParameter("month");
+        try {
+            List<Enquiry> list = (month != null && month.matches("\\d{4}-\\d{2}"))
+                    ? dao.listForMonth(month)
+                    : dao.listAll();
+            resp.setContentType("text/csv; charset=UTF-8");
+            resp.setHeader("Content-Disposition", "attachment; filename=\"bookings.csv\"");
+            PrintWriter w = resp.getWriter();
+            w.println("Reference,Name,Mobile,Event Date,End Date,Rental Type,Function Type,Status," +
+                      "Elec Units,Gas Kg,Decoration (Rs),Early Entry (Rs),Key Loss (Rs),Created At");
+            for (Enquiry e : list) {
+                w.println(String.join(",",
+                    csv(e.getReference()),
+                    csv(e.getCustomerName()),
+                    csv(e.getMobile()),
+                    e.getEventDate()             != null ? e.getEventDate().toString()                         : "",
+                    e.getEndDate()               != null ? e.getEndDate().toString()                           : "",
+                    csv(e.getRentalType()),
+                    csv(e.getFunctionType()),
+                    csv(e.getStatus()),
+                    e.getElecUnits()             != null ? e.getElecUnits().toString()                         : "",
+                    e.getGasKg()                 != null ? e.getGasKg().toString()                             : "",
+                    e.getDecorationChargePaise() != null ? String.valueOf(e.getDecorationChargePaise() / 100.0) : "",
+                    e.getEarlyEntryChargePaise() != null ? String.valueOf(e.getEarlyEntryChargePaise() / 100.0) : "",
+                    e.getKeyLossChargePaise()    != null ? String.valueOf(e.getKeyLossChargePaise()    / 100.0) : "",
+                    e.getCreatedAt()             != null ? e.getCreatedAt().toString()                         : ""
+                ));
+            }
+            w.flush();
+        } catch (Exception e) {
+            getServletContext().log("Failed to export enquiries", e);
+            JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Export failed");
+        }
+    }
+
+    private static String csv(String s) {
+        if (s == null) return "";
+        if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
+            return "\"" + s.replace("\"", "\"\"") + "\"";
+        }
+        return s;
     }
 
     @Override

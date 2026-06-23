@@ -10,8 +10,11 @@ import java.sql.SQLException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EnquiryDao {
 
@@ -297,6 +300,62 @@ public class EnquiryDao {
             ps.setString(6, reference);
             return ps.executeUpdate() > 0;
         }
+    }
+
+    public Map<String, Object> statsForMonth(String yearMonth) throws SQLException {
+        YearMonth ym = YearMonth.parse(yearMonth);
+        LocalDate firstDay = ym.atDay(1);
+        LocalDate lastDay = ym.atEndOfMonth();
+        int daysInMonth = ym.lengthOfMonth();
+        long bookingsCount = 0, billingPaise = 0, occupiedDays = 0;
+        try (Connection conn = Database.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM enquiries WHERE status IN ('CONFIRMED','COMPLETED') " +
+                    "AND event_date >= ? AND event_date <= ?")) {
+                ps.setObject(1, firstDay);
+                ps.setObject(2, lastDay);
+                try (ResultSet rs = ps.executeQuery()) { if (rs.next()) bookingsCount = rs.getLong(1); }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COALESCE(SUM(COALESCE(elec_units,0)*4000 + COALESCE(gas_kg,0)*18000 + " +
+                    "COALESCE(decoration_charge_paise,0) + COALESCE(early_entry_charge_paise,0) + " +
+                    "COALESCE(key_loss_charge_paise,0)),0) FROM enquiries " +
+                    "WHERE status='COMPLETED' AND event_date >= ? AND event_date <= ?")) {
+                ps.setObject(1, firstDay);
+                ps.setObject(2, lastDay);
+                try (ResultSet rs = ps.executeQuery()) { if (rs.next()) billingPaise = rs.getLong(1); }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COUNT(DISTINCT event_date) FROM enquiries WHERE status IN ('CONFIRMED','COMPLETED') " +
+                    "AND event_date >= ? AND event_date <= ?")) {
+                ps.setObject(1, firstDay);
+                ps.setObject(2, lastDay);
+                try (ResultSet rs = ps.executeQuery()) { if (rs.next()) occupiedDays = rs.getLong(1); }
+            }
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("bookingsCount", bookingsCount);
+        result.put("billingCollectedPaise", billingPaise);
+        result.put("occupiedDays", occupiedDays);
+        result.put("daysInMonth", daysInMonth);
+        result.put("occupancyRate", daysInMonth > 0 ? (int) Math.round(occupiedDays * 100.0 / daysInMonth) : 0);
+        return result;
+    }
+
+    public List<Enquiry> listForMonth(String yearMonth) throws SQLException {
+        YearMonth ym = YearMonth.parse(yearMonth);
+        List<Enquiry> list = new ArrayList<>();
+        try (Connection conn = Database.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT * FROM enquiries WHERE event_date >= ? AND event_date <= ? " +
+                     "ORDER BY event_date, start_datetime")) {
+            ps.setObject(1, ym.atDay(1));
+            ps.setObject(2, ym.atEndOfMonth());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        }
+        return list;
     }
 
     private static String newReference() {

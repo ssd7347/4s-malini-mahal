@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <color android:color="#000000"/>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="5%"
+            android:insetRight="5%"
+            android:insetTop="22%"
+            android:insetBottom="22%">
+            <bitmap
+                android:src="@mipmap/ic_launcher"
+                android:gravity="fill"/>
+        </inset>
+    </item>
+</layer-list>

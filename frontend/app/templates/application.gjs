@@ -1,10 +1,12 @@
 import { pageTitle } from 'ember-page-title';
 import NavBar from 'frontend/components/nav-bar';
 import OfflineOverlay from 'frontend/components/offline-overlay';
+import FloatingWhatsapp from 'frontend/components/floating-whatsapp';
 
 <template>
   {{pageTitle "4S Malini Mahal"}}
   <OfflineOverlay />
+  <FloatingWhatsapp />
 
   <div class="min-h-screen flex flex-col bg-stone-50 text-stone-800">
     <NavBar />
