@@ -1,8 +1,10 @@
 import { pageTitle } from 'ember-page-title';
 import NavBar from 'frontend/components/nav-bar';
+import OfflineOverlay from 'frontend/components/offline-overlay';
 
 <template>
   {{pageTitle "4S Malini Mahal"}}
+  <OfflineOverlay />
 
   <div class="min-h-screen flex flex-col bg-stone-50 text-stone-800">
     <NavBar />
