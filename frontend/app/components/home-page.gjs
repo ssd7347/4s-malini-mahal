@@ -339,13 +339,6 @@ export default class HomePage extends Component {
             </LinkTo>
           </div>
         </div>
-        {{#if this.hasMultipleHeroSlides}}
-          <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            {{#each this.heroSlides as |slide|}}
-              <span class="block h-1.5 rounded-full transition-all duration-500 {{if slide.active 'w-6 bg-white' 'w-1.5 bg-white/40'}}"></span>
-            {{/each}}
-          </div>
-        {{/if}}
       </div>
 
       {{! ── STATS BANNER ── }}
