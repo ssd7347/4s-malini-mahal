@@ -117,7 +117,7 @@ export default class AdminPortal extends Component {
   // ── Derived rows ────────────────────────────────────────────────────────────
 
   get galleryRows() {
-    const HOME_LABELS = { 1: 'Welcome', 2: 'About', 3: 'Hospitality', 4: 'Book Online' };
+    const HOME_LABELS = { 1: 'Welcome', 2: 'About', 3: 'Hospitality', 4: 'Book Online', 5: 'Gallery 5', 6: 'Gallery 6' };
     return this.galleryItems.map((item) => {
       const isLocalVideo = item.mediaType === 'VIDEO' && !!item.filename;
       return {
@@ -131,7 +131,7 @@ export default class AdminPortal extends Component {
             : (ytId(item.youtubeUrl) ? `https://img.youtube.com/vi/${ytId(item.youtubeUrl)}/hqdefault.jpg` : ''),
         videoSrc: isLocalVideo ? (item.mediaUrl || apiUrl('/api/media/' + item.filename)) : null,
         homeSlotLabel: item.homeSlot ? HOME_LABELS[item.homeSlot] : null,
-        pinSlots: [1, 2, 3, 4].map(s => ({ slot: s, label: HOME_LABELS[s], active: item.homeSlot === s })),
+        pinSlots: [1, 2, 3, 4, 5, 6].map(s => ({ slot: s, label: HOME_LABELS[s], active: item.homeSlot === s })),
       };
     });
   }

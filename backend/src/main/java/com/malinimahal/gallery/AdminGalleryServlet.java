@@ -157,8 +157,8 @@ public class AdminGalleryServlet extends HttpServlet {
             Map<String, Object> body = JsonSupport.MAPPER.readValue(req.getInputStream(), Map.class);
             Object slotVal = body.get("homeSlot");
             Integer slot = (slotVal == null) ? null : ((Number) slotVal).intValue();
-            if (slot != null && (slot < 1 || slot > 4)) {
-                JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, "homeSlot must be 1–4 or null");
+            if (slot != null && (slot < 1 || slot > 6)) {
+                JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, "homeSlot must be 1–6 or null");
                 return;
             }
             // If setting a slot, clear any other image already in that slot first

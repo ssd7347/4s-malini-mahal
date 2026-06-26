@@ -295,6 +295,8 @@ export default class HomePage extends Component {
   get gi1()       { return this._slotSrc(2); }
   get gi2()       { return this._slotSrc(3); }
   get gi3()       { return this._slotSrc(4); }
+  get gi4()       { return this._slotSrc(5); }
+  get gi5()       { return this._slotSrc(6); }
   get hasGallery(){ return this._galleryItems.length >= 3; }
 
   <template>
