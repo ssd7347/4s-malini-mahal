@@ -36,7 +36,7 @@ public class OtpServlet extends HttpServlet {
     public static final String ATTR_MOBILE    = "authMobile";
     public static final String ATTR_CUST_ID   = "authCustomerId";
 
-    private static final int OTP_TTL_MINUTES = 5;
+    private static final int OTP_TTL_MINUTES = 2;
 
     private static final String ADMIN_MOBILE =
             System.getenv().getOrDefault("ADMIN_MOBILE", "9443380023");
@@ -93,12 +93,7 @@ public class OtpServlet extends HttpServlet {
             return;
         }
 
-        String msg = "Your 4S Malini Mahal login OTP is: " + code +
-                "\nValid for " + OTP_TTL_MINUTES + " minutes. Do not share.";
-        boolean sent = WhatsAppSender.send(mobile, msg);
-        if (!sent) {
-            sent = SmsSender.send(mobile, code);
-        }
+        boolean sent = SmsSender.send(mobile, code);
 
         Map<String, Object> result = new HashMap<>();
         result.put("sent", true);

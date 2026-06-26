@@ -26,7 +26,7 @@ public class SmsSender {
     /** Returns true if OTP SMS was sent, false if key not configured or send failed. */
     public static boolean send(String mobile, String otp) {
         if (!isConfigured()) return false;
-        String message = "Your 4S Malini Mahal login OTP is " + otp + ". Valid for 5 minutes. Do not share.";
+        String message = "Your 4S Malini Mahal login OTP is " + otp + ". Valid for 2 minutes. Do not share.";
         return sendRaw(mobile, message);
     }
 
