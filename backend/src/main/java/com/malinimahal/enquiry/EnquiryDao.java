@@ -200,8 +200,7 @@ public class EnquiryDao {
         final String sql = """
                 SELECT EXISTS(
                     SELECT 1 FROM enquiries
-                    WHERE (status NOT IN ('CANCELLED', 'REJECTED', 'DECLINED', 'COMPLETED', 'AWAITING_PAYMENT')
-                           OR (status = 'AWAITING_PAYMENT' AND created_at > NOW() - INTERVAL '30 minutes'))
+                    WHERE status NOT IN ('CANCELLED', 'REJECTED', 'DECLINED', 'COMPLETED', 'AWAITING_PAYMENT')
                     AND start_datetime IS NOT NULL
                     AND end_datetime IS NOT NULL
                     AND (
