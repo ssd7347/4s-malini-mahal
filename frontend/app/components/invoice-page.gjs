@@ -76,6 +76,9 @@ export default class InvoicePage extends Component {
       const res = await fetch(apiUrl(`/api/payments/invoice/${this.reference}`));
       if (res.ok) {
         this.invoice = await res.json();
+        if (new URLSearchParams(window.location.search).get('print') === '1') {
+          setTimeout(() => window.print(), 400);
+        }
       } else {
         const d = await res.json().catch(() => ({}));
         this.error = d.error || 'Could not load invoice';

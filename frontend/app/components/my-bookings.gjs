@@ -1,3 +1,5 @@
+﻿const BOOKING_SKELETON = [1, 2, 3];
+
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
@@ -338,7 +340,18 @@ export default class MyBookings extends Component {
       {{#if this.loadError}}
         <p class="px-5 py-8 text-sm text-center text-stone-400">Could not load bookings. Please refresh the page.</p>
       {{else if this.isLoading}}
-        <p class="px-5 py-8 text-sm text-center text-stone-400 animate-pulse">{{this.t.loading}}</p>
+        <div class="divide-y divide-stone-100">
+          {{#each BOOKING_SKELETON as |_|}}
+            <div class="animate-pulse px-5 py-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="h-4 bg-stone-200 rounded w-24"></div>
+                <div class="h-5 bg-stone-200 rounded-full w-20"></div>
+              </div>
+              <div class="h-3 bg-stone-100 rounded w-44 mt-1"></div>
+              <div class="h-3 bg-stone-100 rounded w-32"></div>
+            </div>
+          {{/each}}
+        </div>
       {{else if this.isEmpty}}
         <div class="px-5 py-10 text-center">
           <p class="text-sm text-stone-400">{{this.t.empty}}</p>

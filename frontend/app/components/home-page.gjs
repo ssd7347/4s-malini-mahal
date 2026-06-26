@@ -1,4 +1,4 @@
-import Component from '@glimmer/component';
+﻿import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
 import { service } from '@ember/service';
@@ -431,7 +431,7 @@ export default class HomePage extends Component {
             </div>
 
             {{! Text right on desktop }}
-            <div class="p-8 flex flex-col justify-center">
+            <div class="p-8 flex flex-col justify-center bg-white">
               <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">{{this.t.aboutLabel}}</p>
               <h2 class="text-2xl sm:text-3xl font-bold text-stone-900 leading-snug mb-4">{{this.t.aboutTitle}}</h2>
               <p class="text-stone-500 leading-relaxed mb-4">{{this.t.aboutP1}}</p>

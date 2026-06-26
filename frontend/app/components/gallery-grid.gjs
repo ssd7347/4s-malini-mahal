@@ -1,9 +1,11 @@
-import Component from '@glimmer/component';
+﻿import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
 import { apiUrl } from 'frontend/utils/api';
+
+const SKELETON = [1, 2, 3, 4, 5, 6];
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -242,12 +244,10 @@ export default class GalleryGrid extends Component {
     </div>
 
     {{#if this.loading}}
-      <div class="flex items-center justify-center gap-3 py-20 text-stone-400">
-        <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-        </svg>
-        <span class="text-sm">Loading gallery…</span>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {{#each SKELETON as |_|}}
+          <div class="animate-pulse rounded-xl aspect-video bg-stone-200"></div>
+        {{/each}}
       </div>
 
     {{else if this.gridItems.length}}
