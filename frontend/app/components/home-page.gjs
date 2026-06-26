@@ -277,7 +277,7 @@ export default class HomePage extends Component {
 
   get t()         { return T[this.language.lang]; }
   _imgSrc(idx)    { const it = this._galleryItems[idx]; return it ? (it.mediaUrl || apiUrl('/api/media/' + it.filename)) : null; }
-  get heroImage() { return this._imgSrc(0); }
+  get heroImage() { return this._slotSrc(1); }
   get heroSlides() {
     return this._galleryItems.map((item, i) => ({
       src: item.mediaUrl || apiUrl('/api/media/' + item.filename),
