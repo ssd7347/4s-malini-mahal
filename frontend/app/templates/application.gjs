@@ -2,9 +2,11 @@ import { pageTitle } from 'ember-page-title';
 import NavBar from 'frontend/components/nav-bar';
 import OfflineOverlay from 'frontend/components/offline-overlay';
 import FloatingWhatsapp from 'frontend/components/floating-whatsapp';
+import InactivityWatcher from 'frontend/components/inactivity-watcher';
 
 <template>
   {{pageTitle "4S Malini Mahal"}}
+  <InactivityWatcher />
   <OfflineOverlay />
   <FloatingWhatsapp />
 
@@ -21,6 +23,11 @@ import FloatingWhatsapp from 'frontend/components/floating-whatsapp';
         <a href="tel:+919443380023" class="hover:text-rose-600 transition-colors duration-150">+91 94433 80023</a>
         <a href="https://wa.me/919443380023" target="_blank" rel="noopener noreferrer" class="hover:text-green-600 transition-colors duration-150">WhatsApp</a>
         <a href="https://www.instagram.com/4s_malini_mahal?igsh=MXd2NmhtdXB4OXh6bQ==" target="_blank" rel="noopener noreferrer" class="hover:text-pink-600 transition-colors duration-150">Instagram</a>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+        <a href="/privacy-policy" class="hover:text-stone-600 transition-colors duration-150">Privacy Policy</a>
+        <a href="/terms" class="hover:text-stone-600 transition-colors duration-150">Terms &amp; Conditions</a>
+        <a href="/refund-policy" class="hover:text-stone-600 transition-colors duration-150">Refund Policy</a>
       </div>
     </footer>
   </div>
