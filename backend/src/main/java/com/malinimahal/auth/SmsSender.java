@@ -22,6 +22,29 @@ public class SmsSender {
 
     /** Returns true if OTP SMS was sent, false if key not configured or send failed. */
     public static boolean send(String mobile, String otp) {
-        return false; // SMS disabled — OTP shown on screen
+        if (!isConfigured()) return false;
+        try {
+            String url = "https://2factor.in/API/V1/" + TWO_FACTOR_KEY
+                    + "/SMS/" + mobile + "/" + otp;
+
+            HttpResponse<String> res = HttpClient.newHttpClient().send(
+                    HttpRequest.newBuilder()
+                            .uri(URI.create(url))
+                            .timeout(Duration.ofSeconds(10))
+                            .GET()
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString());
+
+            String body = res.body();
+            if (res.statusCode() == 200 && body.contains("\"Success\"")) {
+                LOG.info("OTP SMS sent via 2Factor to " + mobile);
+                return true;
+            }
+            LOG.warning("2Factor failed (" + res.statusCode() + "): " + body);
+            return false;
+        } catch (Exception e) {
+            LOG.warning("2Factor send error: " + e.getMessage());
+            return false;
+        }
     }
 }
