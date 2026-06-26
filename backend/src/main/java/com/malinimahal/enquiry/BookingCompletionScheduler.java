@@ -37,6 +37,10 @@ public class BookingCompletionScheduler implements ServletContextListener {
             if (!refs.isEmpty()) {
                 System.out.println("[BookingCompletionScheduler] Auto-completed " + refs.size() + " booking(s): " + refs);
             }
+            int cancelled = dao.cancelAbandonedPayments();
+            if (cancelled > 0) {
+                System.out.println("[BookingCompletionScheduler] Cancelled " + cancelled + " abandoned AWAITING_PAYMENT booking(s).");
+            }
         } catch (Exception e) {
             System.err.println("[BookingCompletionScheduler] Error: " + e.getMessage());
         }

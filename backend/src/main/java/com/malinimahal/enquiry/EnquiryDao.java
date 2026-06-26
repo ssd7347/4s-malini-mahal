@@ -145,6 +145,15 @@ public class EnquiryDao {
         return out;
     }
 
+    public int cancelAbandonedPayments() throws SQLException {
+        try (Connection conn = Database.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE enquiries SET status = 'CANCELLED' " +
+                     "WHERE status = 'AWAITING_PAYMENT' AND created_at < NOW() - INTERVAL '2 hours'")) {
+            return ps.executeUpdate();
+        }
+    }
+
     public List<String> findReferencesForAutoComplete() throws SQLException {
         List<String> refs = new ArrayList<>();
         String sql =
@@ -191,7 +200,8 @@ public class EnquiryDao {
         final String sql = """
                 SELECT EXISTS(
                     SELECT 1 FROM enquiries
-                    WHERE status NOT IN ('CANCELLED', 'REJECTED', 'DECLINED', 'COMPLETED')
+                    WHERE (status NOT IN ('CANCELLED', 'REJECTED', 'DECLINED', 'COMPLETED', 'AWAITING_PAYMENT')
+                           OR (status = 'AWAITING_PAYMENT' AND created_at > NOW() - INTERVAL '30 minutes'))
                     AND start_datetime IS NOT NULL
                     AND end_datetime IS NOT NULL
                     AND (

@@ -51,13 +51,13 @@ public class AvailabilityServlet extends HttpServlet {
                 SELECT
                   EXISTS(SELECT 1 FROM blocked_dates WHERE blocked_date = ?) AS blocked,
                   EXISTS(SELECT 1 FROM enquiries WHERE event_date = ?
-                         AND status IN ('NEW','UNDER_ENQUIRY','AWAITING_PAYMENT','CONFIRMED')) AS any_booking,
+                         AND status IN ('NEW','UNDER_ENQUIRY','CONFIRMED')) AS any_booking,
                   EXISTS(SELECT 1 FROM enquiries WHERE event_date = ?
                          AND rental_type = 'FULL_DAY'
-                         AND status IN ('NEW','UNDER_ENQUIRY','AWAITING_PAYMENT','CONFIRMED')) AS today_full_day,
+                         AND status IN ('NEW','UNDER_ENQUIRY','CONFIRMED')) AS today_full_day,
                   EXISTS(SELECT 1 FROM enquiries WHERE event_date = ?
                          AND rental_type = 'FULL_DAY'
-                         AND status IN ('NEW','UNDER_ENQUIRY','AWAITING_PAYMENT','CONFIRMED')) AS next_full_day
+                         AND status IN ('NEW','UNDER_ENQUIRY','CONFIRMED')) AS next_full_day
                 """;
         final String slotSql = """
                 SELECT rental_type,
@@ -66,7 +66,7 @@ public class AvailabilityServlet extends HttpServlet {
                 FROM enquiries
                 WHERE event_date = ?
                 AND rental_type != 'FULL_DAY'
-                AND status IN ('NEW','UNDER_ENQUIRY','AWAITING_PAYMENT','CONFIRMED')
+                AND status IN ('NEW','UNDER_ENQUIRY','CONFIRMED')
                 ORDER BY start_datetime
                 """;
         try (Connection conn = Database.getConnection()) {
