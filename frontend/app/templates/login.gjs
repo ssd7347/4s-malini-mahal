@@ -3,8 +3,8 @@ import { service } from '@ember/service';
 import LoginForm from 'frontend/components/login-form';
 
 const T = {
-  en: { title: 'Log in to continue',   subtitle: "We'll send a one-time code to your WhatsApp" },
-  ta: { title: 'தொடர உள்நுழைவு',      subtitle: 'உங்கள் WhatsApp-க்கு ஒரு முறை குறியீடு அனுப்புவோம்' },
+  en: { title: 'Log in to continue',   subtitle: "We'll send a one-time code to your mobile via SMS" },
+  ta: { title: 'தொடர உள்நுழைவு',      subtitle: 'உங்கள் கைபேசிக்கு SMS மூலம் ஒரு முறை குறியீடு அனுப்புவோம்' },
 };
 
 export default class LoginTemplate extends Component {
