@@ -286,12 +286,15 @@ export default class HomePage extends Component {
   }
   get hasHeroSlides() { return this.heroSlides.length > 0; }
   get hasMultipleHeroSlides() { return this.heroSlides.length > 1; }
-  get gi0()       { return this._imgSrc(0); }
-  get gi1()       { return this._imgSrc(1); }
-  get gi2()       { return this._imgSrc(2); }
-  get gi3()       { return this._imgSrc(3); }
-  get gi4()       { return this._imgSrc(4); }
-  get gi5()       { return this._imgSrc(5); }
+  _slotSrc(slot) {
+    const item = this._galleryItems.find(i => i.homeSlot === slot);
+    if (item) return item.mediaUrl || apiUrl('/api/media/' + item.filename);
+    return this._imgSrc(slot - 1);
+  }
+  get gi0()       { return this._slotSrc(1); }
+  get gi1()       { return this._slotSrc(2); }
+  get gi2()       { return this._slotSrc(3); }
+  get gi3()       { return this._slotSrc(4); }
   get hasGallery(){ return this._galleryItems.length >= 3; }
 
   <template>

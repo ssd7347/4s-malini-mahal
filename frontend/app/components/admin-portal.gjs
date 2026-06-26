@@ -117,6 +117,7 @@ export default class AdminPortal extends Component {
   // ── Derived rows ────────────────────────────────────────────────────────────
 
   get galleryRows() {
+    const HOME_LABELS = { 1: 'Welcome', 2: 'About', 3: 'Hospitality', 4: 'Book Online' };
     return this.galleryItems.map((item) => {
       const isLocalVideo = item.mediaType === 'VIDEO' && !!item.filename;
       return {
@@ -129,6 +130,8 @@ export default class AdminPortal extends Component {
             ? null
             : (ytId(item.youtubeUrl) ? `https://img.youtube.com/vi/${ytId(item.youtubeUrl)}/hqdefault.jpg` : ''),
         videoSrc: isLocalVideo ? (item.mediaUrl || apiUrl('/api/media/' + item.filename)) : null,
+        homeSlotLabel: item.homeSlot ? HOME_LABELS[item.homeSlot] : null,
+        pinSlots: [1, 2, 3, 4].map(s => ({ slot: s, label: HOME_LABELS[s], active: item.homeSlot === s })),
       };
     });
   }
@@ -474,6 +477,23 @@ export default class AdminPortal extends Component {
     if (res.ok) {
       this.galleryItems = this.galleryItems.filter((i) => i.id !== id);
       this.flash('Item removed from gallery');
+    }
+  }
+
+  @action
+  async pinToHome(id, slot) {
+    const res = await this.api(`/api/admin/gallery/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ homeSlot: slot }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      this.galleryItems = this.galleryItems.map(i =>
+        i.id === id ? { ...i, homeSlot: updated.homeSlot } :
+        (updated.homeSlot && i.homeSlot === updated.homeSlot ? { ...i, homeSlot: null } : i)
+      );
+      this.flash(slot ? `Pinned to Home section ${slot}` : 'Unpinned from home page');
     }
   }
 
@@ -1144,8 +1164,16 @@ export default class AdminPortal extends Component {
                 </div>
               {{/if}}
 
-              {{! Hover overlay with remove button }}
-              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-150 flex items-start justify-end p-2">
+              {{! Pin badge (always visible when pinned) }}
+              {{#if item.homeSlotLabel}}
+                <div class="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 text-white z-10 pointer-events-none">
+                  <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M16 3a1 1 0 011 1v1h1a1 1 0 010 2h-.268l.537 5.372A3 3 0 0121 15v1a1 1 0 01-1 1h-6v4a1 1 0 01-2 0v-4H6a1 1 0 01-1-1v-1a3 3 0 012.731-2.628L8.268 7H8a1 1 0 010-2h1V4a1 1 0 011-1h6z"/></svg>
+                  <span class="text-xs font-semibold leading-none">{{item.homeSlotLabel}}</span>
+                </div>
+              {{/if}}
+
+              {{! Hover overlay with remove + pin buttons }}
+              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-150 flex flex-col items-end justify-between p-2">
                 <button
                   type="button"
                   class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 rounded-full bg-red-600 hover:bg-red-700 h-7 w-7 flex items-center justify-center shadow-sm"
@@ -1156,6 +1184,19 @@ export default class AdminPortal extends Component {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                   </svg>
                 </button>
+                {{#if item.isImage}}
+                  <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 w-full">
+                    <p class="text-white text-xs font-semibold mb-1 text-center drop-shadow">Pin to Home</p>
+                    <div class="flex gap-1 justify-center flex-wrap">
+                      {{#each item.pinSlots as |ps|}}
+                        <button type="button"
+                          class="rounded px-1.5 py-0.5 text-xs font-bold shadow transition-colors {{if ps.active 'bg-rose-500 text-white' 'bg-white/80 text-stone-800 hover:bg-white'}}"
+                          {{on "click" (fn this.pinToHome item.id (if ps.active null ps.slot))}}
+                        >{{ps.label}}</button>
+                      {{/each}}
+                    </div>
+                  </div>
+                {{/if}}
               </div>
 
               {{#if item.title}}

@@ -132,6 +132,52 @@ public class AdminGalleryServlet extends HttpServlet {
         JsonSupport.write(resp, HttpServletResponse.SC_CREATED, item);
     }
 
+    /** PATCH /api/admin/gallery/{id}  body: {"homeSlot": 1}  or {"homeSlot": null} */
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp)
+            throws jakarta.servlet.ServletException, IOException {
+        if ("PATCH".equalsIgnoreCase(req.getMethod())) {
+            handlePatch(req, resp);
+        } else {
+            super.service(req, resp);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handlePatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null || pathInfo.length() < 2) {
+            JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, "ID required");
+            return;
+        }
+        long id;
+        try { id = Long.parseLong(pathInfo.substring(1)); }
+        catch (NumberFormatException e) { JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, "Invalid ID"); return; }
+        try {
+            Map<String, Object> body = JsonSupport.MAPPER.readValue(req.getInputStream(), Map.class);
+            Object slotVal = body.get("homeSlot");
+            Integer slot = (slotVal == null) ? null : ((Number) slotVal).intValue();
+            if (slot != null && (slot < 1 || slot > 4)) {
+                JsonSupport.error(resp, HttpServletResponse.SC_BAD_REQUEST, "homeSlot must be 1–4 or null");
+                return;
+            }
+            // If setting a slot, clear any other image already in that slot first
+            if (slot != null) {
+                for (GalleryItem other : dao.listAll()) {
+                    if (slot.equals(other.getHomeSlot()) && other.getId() != id) {
+                        dao.setHomeSlot(other.getId(), null);
+                    }
+                }
+            }
+            dao.setHomeSlot(id, slot);
+            GalleryItem item = dao.findById(id);
+            JsonSupport.write(resp, HttpServletResponse.SC_OK, item);
+        } catch (Exception e) {
+            getServletContext().log("Gallery patch failed", e);
+            JsonSupport.error(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not update item");
+        }
+    }
+
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();

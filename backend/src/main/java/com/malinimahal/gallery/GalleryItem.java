@@ -34,6 +34,11 @@ public class GalleryItem {
     public int getDisplayOrder()            { return displayOrder; }
     public void setDisplayOrder(int v)      { this.displayOrder = v; }
 
+    /** 1–4 = pinned to a specific home page section slot; null = not pinned */
+    private Integer homeSlot;
+    public Integer getHomeSlot()            { return homeSlot; }
+    public void setHomeSlot(Integer v)      { this.homeSlot = v; }
+
     public OffsetDateTime getCreatedAt()    { return createdAt; }
     public void setCreatedAt(OffsetDateTime v) { this.createdAt = v; }
 }

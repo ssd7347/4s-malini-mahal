@@ -50,6 +50,17 @@ public class GalleryDao {
         }
     }
 
+    public boolean setHomeSlot(long id, Integer slot) throws SQLException {
+        String sql = "UPDATE gallery_items SET home_slot = ? WHERE id = ?";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (slot == null) ps.setNull(1, java.sql.Types.INTEGER);
+            else ps.setInt(1, slot);
+            ps.setLong(2, id);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public boolean remove(long id) throws SQLException {
         String sql = "DELETE FROM gallery_items WHERE id = ?";
         try (Connection conn = Database.getConnection();
@@ -71,6 +82,8 @@ public class GalleryDao {
         item.setYoutubeUrl(rs.getString("youtube_url"));
         item.setTitle(rs.getString("title"));
         item.setDisplayOrder(rs.getInt("display_order"));
+        int hs = rs.getInt("home_slot");
+        item.setHomeSlot(rs.wasNull() ? null : hs);
         item.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
         return item;
     }
