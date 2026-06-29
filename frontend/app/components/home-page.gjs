@@ -72,7 +72,7 @@ const T = {
     cap1n: '200', cap1l: 'Total Capacity', cap1d: 'Combined across both floors',
     cap2n: '120', cap2l: 'Floor 1',        cap2d: 'Ground floor main hall',
     cap3n: '80',  cap3l: 'Floor 2',        cap3d: 'Upper floor seating',
-    cap4n: '2+',  cap4l: 'Private Rooms',  cap4d: 'Bride and groom AC rooms',
+    cap4n: '3',   cap4l: 'Private Rooms',  cap4d: 'Bride and groom AC rooms',
 
     testimonialsTitle: 'Trusted by Families',
     t1q: 'A beautiful, well-maintained hall that made our wedding truly special. The AC halls are excellent and the stage was wonderfully decorated.',
@@ -164,7 +164,7 @@ const T = {
     cap1n: '200', cap1l: 'மொத்த கொள்ளளவு', cap1d: 'இரண்டு தளங்களிலும் சேர்த்து',
     cap2n: '120', cap2l: 'தளம் 1 (கீழ்)',   cap2d: 'கீழ் தள மண்டபம்',
     cap3n: '80',  cap3l: 'தளம் 2 (மேல்)',   cap3d: 'மேல் தள கூடுதல் இடம்',
-    cap4n: '2+',  cap4l: 'தனி அறைகள்',      cap4d: 'மணமகள் & மணமகன் AC அறைகள்',
+    cap4n: '3',   cap4l: 'தனி அறைகள்',      cap4d: 'மணமகள் & மணமகன் AC அறைகள்',
 
     testimonialsTitle: 'விருந்தினர்கள் கருத்துகள்',
     t1q: 'அழகான, நன்றாக பராமரிக்கப்படும் மண்டபம். எங்கள் திருமணத்தை மிகவும் சிறப்பாக ஆக்கியது. AC மண்டபம் மற்றும் மேடை அலங்காரம் மிகவும் சிறந்தது.',
