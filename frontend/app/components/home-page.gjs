@@ -53,7 +53,7 @@ const T = {
     locationShort: 'Virudhunagar Main Rd, Thiruthangal',
     viewContact:   'View full contact page',
 
-    stat1n: '200+',   stat1l: 'Guests Capacity',
+    stat1n: '200',    stat1l: 'Guests Capacity',
     stat2n: '3',      stat2l: 'Floors',
     stat3n: '2+',     stat3l: 'Years of Service',
     stat4n: '6',      stat4l: 'Amenities',
@@ -145,7 +145,7 @@ const T = {
     locationShort: 'விருதுநகர் பிரதான சாலை, திருத்தங்கல்',
     viewContact:   'தொடர்பு பக்கம்',
 
-    stat1n: '200+',   stat1l: 'விருந்தினர்கள் கொள்ளளவு',
+    stat1n: '200',    stat1l: 'விருந்தினர்கள் கொள்ளளவு',
     stat2n: '3',      stat2l: 'தளங்கள்',
     stat3n: '2+',     stat3l: 'ஆண்டுகள் சேவை',
     stat4n: '6',      stat4l: 'வசதிகள்',
