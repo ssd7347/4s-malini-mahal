@@ -29,7 +29,7 @@ const T = {
     am1: 'AC Hall',           am1d: 'Fully air-conditioned across both floors',
     am2: 'Bride & Groom Rooms', am2d: 'Private, well-furnished AC rooms',
     am3: 'Dining Hall',       am3d: 'Spacious dining area with modern setup',
-    am4: 'Stage',             am4d: 'Stage for all occasions, decoration charged separately',
+    am4: 'Elevator Facility', am4d: 'Convenient lift access to all floors',
     am5: 'Kitchen',           am5d: 'Full kitchen with gas connection',
     am6: 'Parking',           am6d: 'Ample vehicle parking for all guests',
 
@@ -121,7 +121,7 @@ const T = {
     am1: 'AC மண்டபம்',         am1d: 'இரண்டு தளங்களிலும் முழு ஏர்கண்டிஷன்',
     am2: 'மணமகள் & மணமகன் அறை', am2d: 'தனியான, நவீன AC அறைகள்',
     am3: 'சாப்பாட்டு மண்டபம்',  am3d: 'நவீன வசதியுடன் கூடிய பரந்த சாப்பாட்டு அறை',
-    am4: 'மேடை',               am4d: 'அனைத்து நிகழ்வுகளுக்கும் மேடை, அலங்காரம் தனியாக கட்டணம்',
+    am4: 'மின்தூக்கி வசதி',     am4d: 'அனைத்து தளங்களுக்கும் வசதியான மின்தூக்கி அணுகல்',
     am5: 'சமையலறை',            am5d: 'கேஸ் இணைப்புடன் கூடிய முழு சமையலறை',
     am6: 'வாகன நிறுத்துமிடம்',  am6d: 'விருந்தினர்களுக்கு போதுமான இடவசதி',
 
@@ -665,7 +665,10 @@ export default class HomePage extends Component {
           <div class="reveal card-lift flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-rose-200 transition-all">
             <div class="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
               <svg class="h-6 w-6 text-purple-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                <rect x="4" y="3" width="16" height="18" rx="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.5L9 8l1.5 1.5"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 14.5L15 16l1.5-1.5"/>
               </svg>
             </div>
             <div><p class="font-semibold text-stone-800">{{this.t.am4}}</p><p class="text-sm text-stone-500 mt-0.5">{{this.t.am4d}}</p></div>
