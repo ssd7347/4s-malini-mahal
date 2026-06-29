@@ -9,8 +9,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Unified OTP authentication for customers and admin:
@@ -40,6 +43,19 @@ public class OtpServlet extends HttpServlet {
 
     private static final String ADMIN_MOBILE =
             System.getenv().getOrDefault("ADMIN_MOBILE", "9443380023");
+
+    // Only return devOtp in the response if DEV_MODE=true is explicitly set.
+    // In production with a working SMS provider this never fires; but if SMS fails
+    // in prod without this guard, the OTP would be visible in the browser network tab.
+    private static final boolean DEV_MODE =
+            "true".equalsIgnoreCase(System.getenv("DEV_MODE"));
+
+    // Rate limiting: max 3 OTP requests per mobile per 10 minutes.
+    private static final int RATE_LIMIT_MAX     = 3;
+    private static final long RATE_LIMIT_WINDOW = 10 * 60 * 1000L; // 10 minutes in ms
+
+    private record RateEntry(AtomicInteger count, long windowStart) {}
+    private final ConcurrentHashMap<String, RateEntry> rateLimits = new ConcurrentHashMap<>();
 
     private final OtpDao      otpDao      = new OtpDao();
     private final CustomerDao customerDao = new CustomerDao();
@@ -84,6 +100,13 @@ public class OtpServlet extends HttpServlet {
             return;
         }
 
+        // Rate limit: max 3 OTP requests per mobile per 10-minute window.
+        if (!checkRateLimit(mobile)) {
+            JsonSupport.error(resp, 429,
+                    "Too many OTP requests. Please wait 10 minutes before trying again.");
+            return;
+        }
+
         String code;
         try {
             code = otpDao.generate(mobile);
@@ -98,10 +121,29 @@ public class OtpServlet extends HttpServlet {
         Map<String, Object> result = new HashMap<>();
         result.put("sent", true);
         if (!sent) {
-            // Dev mode: return OTP so the flow can be tested without a messaging provider.
-            result.put("devOtp", code);
+            if (DEV_MODE) {
+                // Dev mode only: return OTP for testing without a real SMS provider.
+                result.put("devOtp", code);
+            } else {
+                // Production: SMS failed — tell user to try again rather than exposing OTP.
+                JsonSupport.error(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                        "Could not send OTP. Please try again in a moment.");
+                return;
+            }
         }
         JsonSupport.write(resp, HttpServletResponse.SC_OK, result);
+    }
+
+    private boolean checkRateLimit(String mobile) {
+        long now = Instant.now().toEpochMilli();
+        RateEntry entry = rateLimits.compute(mobile, (k, existing) -> {
+            if (existing == null || (now - existing.windowStart()) >= RATE_LIMIT_WINDOW) {
+                return new RateEntry(new AtomicInteger(1), now);
+            }
+            existing.count().incrementAndGet();
+            return existing;
+        });
+        return entry.count().get() <= RATE_LIMIT_MAX;
     }
 
     // ── Verify OTP ────────────────────────────────────────────────────────────
