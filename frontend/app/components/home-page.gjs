@@ -44,7 +44,7 @@ const T = {
 
     whyTitle:      'Why Choose Us',
     why1: 'Transparent pricing, no hidden charges or surprises',
-    why2: 'Online booking with instant confirmation and Razorpay payment',
+    why2: 'Online booking with instant confirmation and secure payment',
     why3: 'Trusted by families across Thiruthangal and Sivakasi',
     why4: 'Flexible slots: full day, half day, or hourly bookings',
 
@@ -98,7 +98,7 @@ const T = {
     bookLabel: 'Online Booking',
     bookTitle: 'Book in Minutes, Not Days',
     bookP1: 'Gone are the days of multiple visits and phone calls to check availability. With 4S Malini Mahal, you can check open dates in real time, choose your rental type, and confirm your booking in minutes, right from your phone.',
-    bookP2: 'Pay your advance securely through Razorpay and receive instant confirmation. Transparent, fixed pricing means zero surprises, just a smooth, stress-free path from the first click to your celebration day.',
+    bookP2: 'Pay your advance securely online and receive instant confirmation. Transparent, fixed pricing means zero surprises, just a smooth, stress-free path from the first click to your celebration day.',
     bookCta: 'Book Your Date',
   },
   ta: {
@@ -136,7 +136,7 @@ const T = {
 
     whyTitle:      'எங்களை ஏன் தேர்வு செய்ய வேண்டும்',
     why1: 'வெளிப்படையான கட்டணம், மறைமுக கட்டணங்களோ அதிர்ச்சிகளோ இல்லை',
-    why2: 'ஆன்லைன் பதிவு, உடனடி உறுதிப்படுத்தல் மற்றும் Razorpay கட்டணம்',
+    why2: 'ஆன்லைன் பதிவு, உடனடி உறுதிப்படுத்தல் மற்றும் பாதுகாப்பான கட்டணம்',
     why3: 'திருத்தங்கல் மற்றும் சிவகாசி குடும்பங்களால் நம்பப்படுகிறது',
     why4: 'நெகிழ்வான நேர இடைவெளிகள்: முழு நாள், அரை நாள் அல்லது மணிநேரம்',
 
@@ -190,7 +190,7 @@ const T = {
     bookLabel: 'ஆன்லைன் பதிவு',
     bookTitle: 'நிமிடங்களில் பதிவிடுங்கள்',
     bookP1: 'பல முறை வந்து தேதி சரிபார்க்கும் நாட்கள் முடிந்தன. 4S மாலினி மஹால் மூலம், நிகழ்நேரத்தில் கிடைக்கும் தேதிகளை சரிபார்த்து, வாடகை வகையை தேர்வு செய்து, நிமிடங்களில் மொபைலிலிருந்தே பதிவை உறுதிப்படுத்தலாம்.',
-    bookP2: 'Razorpay மூலம் பாதுகாப்பாக முன்பணம் செலுத்தி உடனடி உறுதிப்படுத்தல் பெறுங்கள். நிலையான வெளிப்படையான கட்டணம், எந்த ஆச்சரியமும் இல்லாமல், முதல் கிளிக்கிலிருந்து விழா நாள் வரை சுமூகமான அனுபவம்.',
+    bookP2: 'பாதுகாப்பாக ஆன்லைனில் முன்பணம் செலுத்தி உடனடி உறுதிப்படுத்தல் பெறுங்கள். நிலையான வெளிப்படையான கட்டணம், எந்த ஆச்சரியமும் இல்லாமல், முதல் கிளிக்கிலிருந்து விழா நாள் வரை சுமூகமான அனுபவம்.',
     bookCta: 'தேதியை பதிவிடுங்கள்',
   },
 };
